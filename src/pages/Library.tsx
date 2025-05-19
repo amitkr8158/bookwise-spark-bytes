@@ -4,8 +4,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
 import { useBooks } from "@/services/bookService";
-import { Client as SupabaseClient } from '@supabase/supabase-js';
-import { createClientComponentClient } from '@supabase/auth-helpers-react';
+import { createClient } from '@supabase/supabase-js';
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -16,7 +15,14 @@ import { Library as LibraryIcon } from "lucide-react";
 const Library = () => {
   const { t } = useTranslation();
   const { language } = useGlobalContext();
-  const supabase = createClientComponentClient<SupabaseClient>();
+  
+  // Instead of using createClientComponentClient which isn't available,
+  // we'll create a placeholder for now that will be replaced when fully
+  // integrating Supabase authentication
+  const supabase = createClient(
+    'https://your-project-url.supabase.co',
+    'your-public-anon-key'
+  );
   
   // Track page view
   usePageViewTracking('/library', 'My Library');
