@@ -76,7 +76,20 @@ const Category = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {books.map((book) => (
-                <BookCard key={book.id} book={book} />
+                <BookCard 
+                  key={book.id} 
+                  id={book.id}
+                  title={book.title}
+                  author={book.author}
+                  coverImage={book.coverImage}
+                  category={book.category}
+                  rating={book.rating}
+                  hasPdf={book.hasPdf}
+                  hasAudio={book.hasAudio}
+                  hasVideo={book.hasVideo}
+                  isFree={book.isFree}
+                  price={book.price}
+                />
               ))}
             </div>
           )}
