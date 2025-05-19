@@ -24,11 +24,19 @@ import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
+// Import SalesNotification component and services
+import SalesNotification from "@/components/notifications/SalesNotification";
+import { useSalesNotifications, useNotificationSettings } from "@/services/configService";
+
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <GlobalProvider>
+const AppContent = () => {
+  // Sales notification setup
+  const { currentNotification } = useSalesNotifications();
+  const { settings } = useNotificationSettings();
+  
+  return (
+    <>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -54,7 +62,22 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        
+        {/* Sales Notification Component */}
+        <SalesNotification 
+          data={currentNotification} 
+          isEnabled={settings.salesNotificationsEnabled}
+          displayDuration={settings.displayDuration * 1000}
+        />
       </TooltipProvider>
+    </>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <GlobalProvider>
+      <AppContent />
     </GlobalProvider>
   </QueryClientProvider>
 );
