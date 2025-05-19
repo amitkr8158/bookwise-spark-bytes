@@ -56,8 +56,27 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+// Define Book interface to fix TypeScript errors
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  coverImage: string;
+  category: string;
+  rating: number;
+  price: number;
+  hasPdf: boolean;
+  hasAudio: boolean;
+  hasVideo: boolean;
+  isFree: boolean;
+  summary?: string;
+  pdfUrl?: string;
+  audioUrl?: string;
+  videoUrl?: string;
+}
+
 // Dummy books data for admin management
-const mockBooks = [
+const mockBooks: Book[] = [
   {
     id: "atomic-habits",
     title: "Atomic Habits",
@@ -118,18 +137,21 @@ const bookSchema = z.object({
   isFree: z.boolean().default(false)
 });
 
+// Define the form type using the zod schema
+type BookFormValues = z.infer<typeof bookSchema>;
+
 const Admin = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [books, setBooks] = useState(mockBooks);
+  const [books, setBooks] = useState<Book[]>(mockBooks);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingBook, setEditingBook] = useState<any>(null);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
   
   // Track page view
   usePageViewTracking('/admin', 'Admin - Book Management');
   
   // Setup form
-  const form = useForm<z.infer<typeof bookSchema>>({
+  const form = useForm<BookFormValues>({
     resolver: zodResolver(bookSchema),
     defaultValues: {
       id: "",
@@ -151,13 +173,13 @@ const Admin = () => {
   });
   
   // Handle form submit
-  const onSubmit = (data: z.infer<typeof bookSchema>) => {
+  const onSubmit = (data: BookFormValues) => {
     console.log("Form data:", data);
     
     // If editing existing book
     if (editingBook) {
       setBooks(books.map(book => 
-        book.id === editingBook.id ? { ...data } : book
+        book.id === editingBook.id ? { ...data } as Book : book
       ));
       
       toast({
@@ -166,7 +188,7 @@ const Admin = () => {
       });
     } else {
       // If creating new book
-      setBooks([...books, data]);
+      setBooks([...books, data as Book]);
       
       toast({
         title: "Book Added",
@@ -179,7 +201,7 @@ const Admin = () => {
   };
   
   // Set up form for editing
-  const handleEditBook = (book: any) => {
+  const handleEditBook = (book: Book) => {
     setEditingBook(book);
     
     // Populate form with book data
