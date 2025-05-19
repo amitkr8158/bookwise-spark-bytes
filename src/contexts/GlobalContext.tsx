@@ -7,8 +7,8 @@ type Theme = 'light' | 'dark' | 'system';
 // User roles
 type UserRole = 'user' | 'admin';
 
-// User profile interface
-interface UserProfile {
+// User profile interface - Now properly exported
+export interface UserProfile {
   id: string;
   name: string;
   email: string;
