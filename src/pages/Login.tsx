@@ -1,8 +1,9 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -43,9 +44,57 @@ const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
 });
 
+// Mock admin user
+const adminUser = {
+  id: "admin-user-1",
+  name: "Admin User",
+  email: "admin@example.com",
+  password: "admin123",
+  role: "admin" as const,
+};
+
+// Mock regular user
+const regularUser = {
+  id: "user-1",
+  name: "John Doe",
+  email: "user@example.com",
+  password: "user123",
+  role: "user" as const,
+};
+
+// Mock purchased items for demo
+const samplePurchasedItems = [
+  {
+    id: "1",
+    title: "Atomic Habits",
+    type: "book" as const,
+    coverImage: "https://m.media-amazon.com/images/I/81wgcld4wxL._AC_UF1000,1000_QL80_.jpg",
+    purchaseDate: "2023-04-15",
+    price: 12.99
+  },
+  {
+    id: "2",
+    title: "The Psychology of Money",
+    type: "book" as const,
+    coverImage: "https://m.media-amazon.com/images/I/71TRUbzcvaL._AC_UF1000,1000_QL80_.jpg",
+    purchaseDate: "2023-05-20",
+    price: 14.99
+  },
+  {
+    id: "business-bundle",
+    title: "Business Essentials Bundle",
+    type: "bundle" as const,
+    coverImage: "https://m.media-amazon.com/images/I/81wgcld4wxL._AC_UF1000,1000_QL80_.jpg",
+    purchaseDate: "2023-06-10",
+    price: 39.99
+  }
+];
+
 const Login = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { setIsAuthenticated, setUser, setPurchasedItems } = useGlobalContext();
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -74,14 +123,54 @@ const Login = () => {
   const onSubmit = (data: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     
-    // Simulate API call
+    // Simple mock authentication (in real app, this would be an API call)
     setTimeout(() => {
       console.log("Login data:", data);
       
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
+      // Check if admin user
+      if (data.email === adminUser.email && data.password === adminUser.password) {
+        setIsAuthenticated(true);
+        setUser({
+          id: adminUser.id,
+          name: adminUser.name,
+          email: adminUser.email,
+          role: adminUser.role,
+        });
+        setPurchasedItems(samplePurchasedItems);
+        
+        toast({
+          title: "Login Successful",
+          description: "Welcome back, Admin!",
+        });
+        
+        navigate('/profile');
+      }
+      // Check if regular user
+      else if (data.email === regularUser.email && data.password === regularUser.password) {
+        setIsAuthenticated(true);
+        setUser({
+          id: regularUser.id,
+          name: regularUser.name,
+          email: regularUser.email,
+          role: regularUser.role,
+        });
+        setPurchasedItems(samplePurchasedItems);
+        
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
+        
+        navigate('/profile');
+      }
+      // Invalid login
+      else {
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+      }
       
       setIsLoading(false);
     }, 1500);
@@ -232,6 +321,12 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md">
+                  <h3 className="font-medium mb-1">Demo Accounts:</h3>
+                  <p><strong>Admin:</strong> admin@example.com / admin123</p>
+                  <p><strong>User:</strong> user@example.com / user123</p>
+                </div>
                 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? t('user.loggingIn') : t('user.login')}

@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { 
   Search, 
@@ -20,19 +21,18 @@ import {
   Sun, 
   Globe,
   ShoppingCart,
-  Package
+  Package,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Header = () => {
   const { t } = useTranslation();
-  const { language, setLanguage, theme, setTheme, isDarkMode } = useGlobalContext();
+  const { language, setLanguage, theme, setTheme, isDarkMode, isAuthenticated, user } = useGlobalContext();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // Mock user data - replace with actual auth
-  const user = null; // Set to an object when logged in
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
@@ -45,6 +45,16 @@ const Header = () => {
       return location.pathname === path;
     }
     return location.pathname.startsWith(path);
+  };
+
+  // Get initials for avatar
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "U";
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   };
 
   return (
@@ -153,11 +163,17 @@ const Header = () => {
           </Link>
 
           {/* Auth */}
-          {user ? (
+          {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
-                  <User className="h-5 w-5" />
+                  <Avatar className="h-8 w-8">
+                    {user.avatar ? (
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                    ) : (
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    )}
+                  </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -167,9 +183,17 @@ const Header = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/library">{t('nav.library')}</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/logout">{t('user.logout')}</Link>
-                </DropdownMenuItem>
+                {user.role === 'admin' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin">
+                        <Settings className="mr-2 h-4 w-4" />
+                        {t('nav.admin')}
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
@@ -290,8 +314,21 @@ const Header = () => {
                 </div>
                 
                 {/* Mobile Auth */}
-                {user ? (
+                {isAuthenticated && user ? (
                   <div className="flex flex-col gap-2 border-t pt-4">
+                    <div className="flex items-center gap-3 p-2">
+                      <Avatar className="h-10 w-10">
+                        {user.avatar ? (
+                          <AvatarImage src={user.avatar} alt={user.name} />
+                        ) : (
+                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
                     <Link 
                       to="/profile" 
                       className="flex items-center gap-2 p-2 hover:bg-muted rounded-md"
@@ -300,9 +337,24 @@ const Header = () => {
                       <User className="h-5 w-5" />
                       <span>{t('user.profile')}</span>
                     </Link>
-                    <button className="flex items-center gap-2 p-2 hover:bg-muted rounded-md text-left">
-                      <span>{t('user.logout')}</span>
-                    </button>
+                    <Link 
+                      to="/library" 
+                      className="flex items-center gap-2 p-2 hover:bg-muted rounded-md"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Book className="h-5 w-5" />
+                      <span>{t('nav.library')}</span>
+                    </Link>
+                    {user.role === 'admin' && (
+                      <Link 
+                        to="/admin" 
+                        className="flex items-center gap-2 p-2 hover:bg-muted rounded-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Settings className="h-5 w-5" />
+                        <span>{t('nav.admin')}</span>
+                      </Link>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2 border-t pt-4">
