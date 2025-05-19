@@ -199,7 +199,7 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({
                 placeholder="Enter your email template here. Use {{QUOTE}}, {{AUTHOR}}, and {{SOURCE}} as placeholders."
               />
               <p className="text-xs text-muted-foreground">
-                Use <code>{{QUOTE}}</code>, <code>{{AUTHOR}}</code>, and <code>{{SOURCE}}</code> as placeholders in your template.
+                Use <code>{"{{QUOTE}}"}</code>, <code>{"{{AUTHOR}}"}</code>, and <code>{"{{SOURCE}}"}</code> as placeholders in your template.
               </p>
             </div>
           </div>
