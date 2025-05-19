@@ -19,7 +19,8 @@ import {
   Moon, 
   Sun, 
   Globe,
-  ShoppingCart
+  ShoppingCart,
+  Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -85,6 +86,15 @@ const Header = () => {
             )}
           >
             {t('nav.categories')}
+          </Link>
+          <Link 
+            to="/bundles" 
+            className={cn(
+              "text-sm font-medium transition-colors",
+              isActive('/bundles') ? "text-book-700 font-semibold" : "hover:text-book-700"
+            )}
+          >
+            {t('nav.bundles')}
           </Link>
           <Link 
             to="/library" 
@@ -220,6 +230,16 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {t('nav.categories')}
+                </Link>
+                <Link 
+                  to="/bundles" 
+                  className={cn(
+                    "text-lg font-medium",
+                    isActive('/bundles') ? "text-book-700 font-semibold" : ""
+                  )}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {t('nav.bundles')}
                 </Link>
                 <Link 
                   to="/library" 

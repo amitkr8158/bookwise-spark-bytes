@@ -1,19 +1,23 @@
 
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
 import { useBooks } from "@/services/bookService";
+import { useToast } from "@/components/ui/use-toast";
+import { ShoppingCart } from "lucide-react";
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import BookCard from "@/components/books/BookCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 const Category = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { language } = useGlobalContext();
   
   // Track page view
@@ -38,6 +42,14 @@ const Category = () => {
     };
     
     return categories[categoryId] || categoryId;
+  };
+
+  // Handle add to cart
+  const handleAddToCart = (bookId: string, bookTitle: string) => {
+    toast({
+      title: "Added to cart",
+      description: `${bookTitle} has been added to your cart.`,
+    });
   };
 
   return (
@@ -76,20 +88,32 @@ const Category = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {books.map((book) => (
-                <BookCard 
-                  key={book.id} 
-                  id={book.id}
-                  title={book.title}
-                  author={book.author}
-                  coverImage={book.coverImage}
-                  category={book.category}
-                  rating={book.rating}
-                  hasPdf={book.hasPdf}
-                  hasAudio={book.hasAudio}
-                  hasVideo={book.hasVideo}
-                  isFree={book.isFree}
-                  price={book.price}
-                />
+                <div key={book.id} className="group flex flex-col h-full">
+                  <Link to={`/book/${book.id}`} className="flex-grow">
+                    <BookCard 
+                      id={book.id} 
+                      title={book.title}
+                      author={book.author}
+                      coverImage={book.coverImage}
+                      category={book.category}
+                      rating={book.rating}
+                      hasPdf={book.hasPdf}
+                      hasAudio={book.hasAudio}
+                      hasVideo={book.hasVideo}
+                      isFree={book.isFree}
+                      price={book.price}
+                    />
+                  </Link>
+                  <div className="mt-3">
+                    <Button 
+                      className="w-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleAddToCart(book.id, book.title)}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      {book.isFree ? "Add to Library" : "Add to Cart"}
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
