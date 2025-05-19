@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 const Header = () => {
   const { t } = useTranslation();
   const { language, setLanguage, theme, setTheme, isDarkMode } = useGlobalContext();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -36,6 +37,14 @@ const Header = () => {
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
   const toggleTheme = () => setTheme(isDarkMode ? 'light' : 'dark');
   const toggleLanguage = () => setLanguage(language === 'en' ? 'hi' : 'en');
+  
+  // Function to check if current path matches
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b">
@@ -50,16 +59,40 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-sm font-medium hover:text-book-700 transition-colors">
+          <Link 
+            to="/" 
+            className={cn(
+              "text-sm font-medium transition-colors",
+              isActive('/') ? "text-book-700 font-semibold" : "hover:text-book-700"
+            )}
+          >
             {t('nav.home')}
           </Link>
-          <Link to="/browse" className="text-sm font-medium hover:text-book-700 transition-colors">
+          <Link 
+            to="/browse" 
+            className={cn(
+              "text-sm font-medium transition-colors",
+              isActive('/browse') ? "text-book-700 font-semibold" : "hover:text-book-700"
+            )}
+          >
             {t('nav.browse')}
           </Link>
-          <Link to="/categories" className="text-sm font-medium hover:text-book-700 transition-colors">
+          <Link 
+            to="/categories" 
+            className={cn(
+              "text-sm font-medium transition-colors",
+              isActive('/categories') || isActive('/category/') ? "text-book-700 font-semibold" : "hover:text-book-700"
+            )}
+          >
             {t('nav.categories')}
           </Link>
-          <Link to="/library" className="text-sm font-medium hover:text-book-700 transition-colors">
+          <Link 
+            to="/library" 
+            className={cn(
+              "text-sm font-medium transition-colors",
+              isActive('/library') ? "text-book-700 font-semibold" : "hover:text-book-700"
+            )}
+          >
             {t('nav.library')}
           </Link>
         </nav>
@@ -160,28 +193,40 @@ const Header = () => {
               <nav className="flex flex-col gap-4">
                 <Link 
                   to="/" 
-                  className="text-lg font-medium"
+                  className={cn(
+                    "text-lg font-medium",
+                    isActive('/') ? "text-book-700 font-semibold" : ""
+                  )}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {t('nav.home')}
                 </Link>
                 <Link 
                   to="/browse" 
-                  className="text-lg font-medium"
+                  className={cn(
+                    "text-lg font-medium",
+                    isActive('/browse') ? "text-book-700 font-semibold" : ""
+                  )}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {t('nav.browse')}
                 </Link>
                 <Link 
                   to="/categories" 
-                  className="text-lg font-medium"
+                  className={cn(
+                    "text-lg font-medium",
+                    isActive('/categories') || isActive('/category/') ? "text-book-700 font-semibold" : ""
+                  )}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {t('nav.categories')}
                 </Link>
                 <Link 
                   to="/library" 
-                  className="text-lg font-medium"
+                  className={cn(
+                    "text-lg font-medium",
+                    isActive('/library') ? "text-book-700 font-semibold" : ""
+                  )}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {t('nav.library')}

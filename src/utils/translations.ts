@@ -37,6 +37,22 @@ export const getTranslation = (key: string, language: 'en' | 'hi'): string => {
       en: '© 2024 BookBites. All rights reserved.',
       hi: '© 2024 BookBites. सर्वाधिकार सुरक्षित।'
     },
+    'footer.terms': {
+      en: 'Terms of Service',
+      hi: 'सेवा की शर्तें'
+    },
+    'footer.privacy': {
+      en: 'Privacy Policy',
+      hi: 'गोपनीयता नीति'
+    },
+    'footer.about': {
+      en: 'About Us',
+      hi: 'हमारे बारे में'
+    },
+    'footer.contact': {
+      en: 'Contact Us',
+      hi: 'संपर्क करें'
+    },
     'page.library.title': {
       en: 'My Library',
       hi: 'मेरी लाइब्रेरी'

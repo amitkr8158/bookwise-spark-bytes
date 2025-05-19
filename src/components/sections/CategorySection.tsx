@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -89,9 +88,26 @@ const CategoryCard: React.FC<CategoryProps> = ({
   );
 };
 
-const CategorySection = () => {
+interface CategorySectionProps {
+  fullPage?: boolean;
+}
+
+const CategorySection: React.FC<CategorySectionProps> = ({ fullPage = false }) => {
   const { t } = useTranslation();
   
+  // If this is being used on the dedicated Categories page,
+  // return just the cards without the section container
+  if (fullPage) {
+    return (
+      <>
+        {categories.map((category) => (
+          <CategoryCard key={category.id} {...category} />
+        ))}
+      </>
+    );
+  }
+  
+  // Otherwise show as a section on the home page
   return (
     <section className="py-12 bg-muted/30">
       <div className="container px-4">
