@@ -1,24 +1,27 @@
 
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
-import { useBooks } from "@/services/bookService";
 import { createClient } from '@supabase/supabase-js';
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Library as LibraryIcon } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText, Download, Book, ExternalLink, Library as LibraryIcon } from "lucide-react";
+
+// Import sample PDF
+import samplePdf from "../assets/sample-summary.pdf";
 
 const Library = () => {
   const { t } = useTranslation();
   const { language } = useGlobalContext();
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Instead of using createClientComponentClient which isn't available,
-  // we'll create a placeholder for now that will be replaced when fully
-  // integrating Supabase authentication
+  // Initialize Supabase client (would be replaced with actual integration)
   const supabase = createClient(
     'https://your-project-url.supabase.co',
     'your-public-anon-key'
@@ -27,16 +30,41 @@ const Library = () => {
   // Track page view
   usePageViewTracking('/library', 'My Library');
   
-  // For now, we'll just display some books as if they were in the user's library
-  // In a real implementation, we would fetch the user's library from Supabase
-  const { 
-    books, 
-    loading, 
-    error 
-  } = useBooks({
-    language,
-    limit: 8,
-  });
+  // Sample books with PDF links
+  const books = [
+    {
+      id: '1',
+      title: 'Atomic Habits',
+      author: 'James Clear',
+      coverImage: 'https://m.media-amazon.com/images/I/81wgcld4wxL._AC_UF1000,1000_QL80_.jpg',
+      description: 'A proven framework for improving every day through small changes in behavior.',
+      pdfUrl: samplePdf
+    },
+    {
+      id: '5',
+      title: 'The Psychology of Money',
+      author: 'Morgan Housel',
+      coverImage: 'https://m.media-amazon.com/images/I/71TRUbzcvaL._AC_UF1000,1000_QL80_.jpg',
+      description: 'Timeless lessons on wealth, greed, and happiness.',
+      pdfUrl: samplePdf
+    }
+  ];
+
+  // Mock authenticated state (false for now)
+  const isAuthenticated = false;
+
+  const handleDownloadPdf = (bookId: string, pdfUrl: string) => {
+    // In a real app, you might track this event
+    console.log(`Downloading PDF for book ID: ${bookId}`);
+    
+    // Create an anchor element and trigger download
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `book-summary-${bookId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -50,59 +78,92 @@ const Library = () => {
           </div>
           
           {/* User not logged in state */}
-          <div className="bg-book-50 dark:bg-book-950/20 rounded-lg p-8 mb-10">
-            <h2 className="text-xl font-semibold mb-3">Sign in to access your library</h2>
-            <p className="text-muted-foreground mb-6">
-              Keep track of your purchased book summaries and save your favorites for later.
-            </p>
-            <div className="flex gap-4">
-              <Button>Sign In</Button>
-              <Button variant="outline">Create Account</Button>
+          {!isAuthenticated && (
+            <div className="bg-book-50 dark:bg-book-950/20 rounded-lg p-8 mb-10">
+              <h2 className="text-xl font-semibold mb-3">Sign in to access your library</h2>
+              <p className="text-muted-foreground mb-6">
+                Keep track of your purchased book summaries and save your favorites for later.
+              </p>
+              <div className="flex gap-4">
+                <Button asChild>
+                  <Link to="/login">Sign In</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link to="/signup">Create Account</Link>
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Books section (this would normally only show if logged in) */}
+          {/* Books section */}
           <section className="my-10">
-            <h2 className="text-2xl font-serif font-bold mb-6">Your Book Summaries</h2>
+            <h2 className="text-2xl font-serif font-bold mb-6">Sample Book Summaries</h2>
             
-            {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                {[...Array(5)].map((_, i) => (
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[1, 2].map((_, i) => (
                   <div key={i} className="flex flex-col">
-                    <Skeleton className="aspect-[2/3] w-full mb-3" />
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-3 w-2/3" />
+                    <Skeleton className="h-64 w-full mb-3" />
+                    <Skeleton className="h-6 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
                   </div>
                 ))}
-              </div>
-            ) : error ? (
-              <div className="p-8 text-center">
-                <p className="text-destructive">Error loading your library</p>
-                <Button variant="outline" className="mt-4">
-                  Try Again
-                </Button>
               </div>
             ) : books.length === 0 ? (
               <div className="p-8 text-center bg-muted/50 rounded-lg">
                 <p className="text-muted-foreground mb-4">Your library is empty</p>
                 <Button asChild>
-                  <a href="/browse">Browse Books</a>
+                  <Link to="/">Browse Books</Link>
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {books.map((book) => (
-                  <div key={book.id} className="flex flex-col">
-                    <a href={`/book/${book.id}`}>
-                      <img 
-                        src={book.coverImage} 
-                        alt={book.title}
-                        className="aspect-[2/3] w-full object-cover rounded-md shadow-md mb-3 hover:shadow-lg transition-shadow"
-                      />
-                    </a>
-                    <h3 className="font-medium line-clamp-1">{book.title}</h3>
-                    <p className="text-sm text-muted-foreground">{book.author}</p>
-                  </div>
+                  <Card key={book.id} className="overflow-hidden flex flex-col">
+                    <div className="flex flex-col md:flex-row">
+                      <div className="w-full md:w-1/3">
+                        <img 
+                          src={book.coverImage} 
+                          alt={book.title}
+                          className="w-full h-48 md:h-full object-cover"
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col flex-grow p-6">
+                        <CardHeader className="p-0 pb-2">
+                          <CardTitle>{book.title}</CardTitle>
+                          <CardDescription>{book.author}</CardDescription>
+                        </CardHeader>
+                        
+                        <CardContent className="p-0 py-2">
+                          <p className="text-sm text-muted-foreground">
+                            {book.description}
+                          </p>
+                        </CardContent>
+                        
+                        <CardFooter className="p-0 pt-4 mt-auto">
+                          <div className="flex flex-wrap gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="flex items-center gap-1"
+                              onClick={() => handleDownloadPdf(book.id, book.pdfUrl)}
+                            >
+                              <Download className="w-4 h-4" /> PDF
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="flex items-center gap-1"
+                              onClick={() => window.open(`/book/${book.id}`, '_blank')}
+                            >
+                              <ExternalLink className="w-4 h-4" /> Details
+                            </Button>
+                          </div>
+                        </CardFooter>
+                      </div>
+                    </div>
+                  </Card>
                 ))}
               </div>
             )}
