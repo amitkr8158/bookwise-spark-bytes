@@ -22,6 +22,27 @@ interface CartItem {
   quantity: number;
 }
 
+// Helper function to convert currency to INR (assuming default is USD)
+const convertToINR = (amountUSD: number): number => {
+  // Using a fixed exchange rate of 1 USD = 83 INR
+  const exchangeRate = 83;
+  return amountUSD * exchangeRate;
+};
+
+// Format currency based on locale
+const formatCurrency = (amount: number, locale: 'en' | 'hi'): string => {
+  // For India, we use INR
+  const currency = 'INR';
+  const formatter = new Intl.NumberFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+  
+  return formatter.format(amount);
+};
+
 const Cart = () => {
   const { t } = useTranslation();
   const { language } = useGlobalContext();
@@ -34,7 +55,7 @@ const Cart = () => {
       id: "1",
       title: "The Psychology of Money",
       author: "Morgan Housel",
-      coverImage: "https://source.unsplash.com/300x450/?book,finance",
+      coverImage: "https://images.unsplash.com/photo-1592496431122-2349e0fbc666?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=450&q=80",
       price: 12.99,
       quantity: 1
     },
@@ -42,7 +63,7 @@ const Cart = () => {
       id: "2",
       title: "Atomic Habits",
       author: "James Clear",
-      coverImage: "https://source.unsplash.com/300x450/?book,habits",
+      coverImage: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=450&q=80",
       price: 14.99,
       quantity: 1
     }
@@ -51,9 +72,15 @@ const Cart = () => {
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
   
-  // Calculate cart totals
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const total = subtotal - discount;
+  // Calculate cart totals in USD
+  const subtotalUSD = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const discountUSD = discount;
+  const totalUSD = subtotalUSD - discountUSD;
+  
+  // Convert to INR
+  const subtotalINR = convertToINR(subtotalUSD);
+  const discountINR = convertToINR(discountUSD);
+  const totalINR = convertToINR(totalUSD);
   
   // Handle quantity changes
   const updateQuantity = (id: string, newQuantity: number) => {
@@ -76,7 +103,7 @@ const Cart = () => {
   // Apply promo code
   const applyPromoCode = () => {
     if (promoCode.toLowerCase() === "discount20") {
-      setDiscount(subtotal * 0.2);
+      setDiscount(subtotalUSD * 0.2);
       toast({
         title: "Promo code applied!",
         description: "You received 20% off your order.",
@@ -135,6 +162,12 @@ const Cart = () => {
                         src={item.coverImage} 
                         alt={item.title} 
                         className="w-full h-full object-cover rounded"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "https://via.placeholder.com/150x210?text=Book+Cover";
+                        }}
                       />
                     </div>
                     
@@ -179,7 +212,7 @@ const Cart = () => {
                         </div>
                         
                         <div className="font-semibold">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          {formatCurrency(convertToINR(item.price * item.quantity), language)}
                         </div>
                       </div>
                     </div>
@@ -196,13 +229,13 @@ const Cart = () => {
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{formatCurrency(subtotalINR, language)}</span>
                   </div>
                   
                   {discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Discount</span>
-                      <span>-${discount.toFixed(2)}</span>
+                      <span>-{formatCurrency(discountINR, language)}</span>
                     </div>
                   )}
                 </div>
@@ -211,7 +244,7 @@ const Cart = () => {
                 
                 <div className="flex justify-between font-semibold text-lg mb-6">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatCurrency(totalINR, language)}</span>
                 </div>
                 
                 {/* Promo Code */}

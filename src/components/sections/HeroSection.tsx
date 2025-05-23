@@ -59,18 +59,18 @@ const HeroSection = () => {
             {t('hero.subtitle')}
           </p>
           
-          {/* Search Box */}
+          {/* Search Box - Fixed size to maintain consistent height */}
           <div className="relative mt-8 max-w-md mx-auto">
-            <div className="flex">
+            <div className="flex h-12">
               <div className="relative flex-grow">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder={t('nav.search')}
-                  className="w-full pl-10 pr-4 py-3 rounded-l-lg border-0 focus:ring-2 focus:ring-book-700"
+                  className="w-full h-full pl-10 pr-4 rounded-l-lg border-0 focus:ring-2 focus:ring-book-700"
                 />
               </div>
-              <Button className="rounded-l-none">
+              <Button className="rounded-l-none h-full px-4">
                 {t('nav.search')}
               </Button>
             </div>

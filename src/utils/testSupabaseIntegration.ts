@@ -1,139 +1,152 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { signIn, signUp, signOut, getUserProfile, updateUserProfile } from "@/services/auth/authService";
-import { getBooks, getBookById, createBook } from "@/services/books/bookService";
+import { PostgrestError, createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Utility to test Supabase integration functionality
- */
-export const testSupabaseIntegration = async () => {
-  const testResults: Record<string, { success: boolean; message: string }> = {};
-  
-  console.log("🧪 Starting Supabase integration tests");
-  
-  // Test 1: Authentication session
+// Function to test Supabase connection
+export const testSupabaseConnection = async (): Promise<{
+  status: 'success' | 'error';
+  message: string;
+}> => {
   try {
-    const { data } = await supabase.auth.getSession();
-    testResults.session = {
-      success: true, 
-      message: data.session ? "User is authenticated" : "No active session"
+    const { data, error } = await supabase.from('books').select('count').single();
+    
+    if (error) throw error;
+    
+    return {
+      status: 'success',
+      message: 'Successfully connected to Supabase!',
     };
-    console.log("✅ Session test:", testResults.session.message);
-  } catch (error: any) {
-    testResults.session = { success: false, message: error.message };
-    console.error("❌ Session test failed:", error.message);
-  }
-  
-  // Test 2: Get books
-  try {
-    const { books, error } = await getBooks({ limit: 5 });
-    testResults.getBooks = { 
-      success: !error, 
-      message: error ? error.toString() : `Retrieved ${books?.length || 0} books`
+  } catch (error) {
+    console.error('Supabase connection error:', error);
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
     };
-    console.log("✅ Get books test:", testResults.getBooks.message);
-  } catch (error: any) {
-    testResults.getBooks = { success: false, message: error.message };
-    console.error("❌ Get books test failed:", error.message);
   }
-  
-  // Test 3: Check database tables
-  try {
-    // Use the rpc method to get tables instead of directly accessing pg_catalog
-    const { data: tablesData, error: tablesError } = await supabase.rpc('get_tables');
-      
-    if (tablesError) {
-      console.log('RPC error:', tablesError);
-      
-      // Fallback to listing known tables
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('books')
-        .select('id')
-        .limit(1);
-        
-      if (fallbackError) {
-        throw fallbackError;
-      }
-      
-      testResults.tables = { 
-        success: true, 
-        message: `Successfully connected to the database. Books table is accessible.`
-      };
-    } else {
-      // If the RPC worked, use that data
-      testResults.tables = { 
-        success: true, 
-        message: `Found ${tablesData?.length || 0} tables in public schema: ${tablesData?.join(', ') || 'none'}`
-      };
-    }
-    console.log("✅ Database tables test:", testResults.tables.message);
-  } catch (error: any) {
-    testResults.tables = { success: false, message: error.message };
-    console.error("❌ Database tables test failed:", error.message);
-  }
-  
-  // Log test results summary
-  console.log("📊 Supabase integration test summary:", testResults);
-  // Use the URL directly from the client configuration to avoid process.env issues
-  console.log("🔗 Supabase connection URL:", "https://xqwmpmsxvhdsscvcmgxi.supabase.co");
-  
-  return testResults;
 };
 
-/**
- * Tests the authentication flow
- * @param email User email
- * @param password User password
- */
-export const testAuthFlow = async (email: string, password: string) => {
-  const testResults: Record<string, { success: boolean; message: string }> = {};
-  
-  console.log("🧪 Testing authentication flow");
-  
-  // Test 1: Sign up
+// Function to get information about public tables
+export const getTablesInfo = async (): Promise<{
+  status: 'success' | 'error';
+  message: string;
+  data?: Record<string, number>;
+}> => {
   try {
-    const { data, error } = await signUp({ 
-      email,
-      password,
-      name: "Test User"
-    });
+    // Get list of public tables
+    const { data: tablesList, error: tablesError } = await supabase.rpc('get_tables');
     
-    testResults.signup = { 
-      success: !error, 
-      message: error ? error.message : "Signup successful"
-    };
-    console.log("✅ Signup test:", testResults.signup.message);
-  } catch (error: any) {
-    testResults.signup = { success: false, message: error.message };
-    console.error("❌ Signup test failed:", error.message);
-  }
-  
-  // Test 2: Sign in
-  try {
-    const { data, error } = await signIn({ email, password });
+    if (tablesError) throw tablesError;
     
-    testResults.signin = { 
-      success: !error, 
-      message: error ? error.message : "Login successful"
-    };
-    console.log("✅ Login test:", testResults.signin.message);
-    
-    // If login successful, test user profile retrieval
-    if (data.user) {
-      const { data: profile, error: profileError } = await getUserProfile(data.user.id);
-      testResults.profile = { 
-        success: !profileError, 
-        message: profileError ? profileError.message : "Profile retrieved"
+    if (!tablesList || tablesList.length === 0) {
+      return {
+        status: 'success',
+        message: 'No tables found in the public schema.',
+        data: {},
       };
-      console.log("✅ Profile test:", testResults.profile.message, profile);
     }
-  } catch (error: any) {
-    testResults.signin = { success: false, message: error.message };
-    console.error("❌ Login test failed:", error.message);
+    
+    // Get row counts for each table
+    const counts: Record<string, number> = {};
+    for (const table of tablesList) {
+      const { data: countData, error: countError } = await supabase
+        .from(table as string)
+        .select('count');
+      
+      if (countError) {
+        counts[table as string] = -1; // Error counting
+      } else {
+        counts[table as string] = countData ? countData.length : 0;
+      }
+    }
+    
+    return {
+      status: 'success',
+      message: `Found ${tablesList.length} tables in the public schema.`,
+      data: counts,
+    };
+  } catch (error) {
+    console.error('Error retrieving table information:', error);
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
   }
-  
-  // Log test results summary
-  console.log("📊 Authentication flow test summary:", testResults);
-  
-  return testResults;
+};
+
+// Function to get storage buckets
+export const getStorageBuckets = async (): Promise<{
+  status: 'success' | 'error';
+  message: string;
+  buckets?: string[];
+}> => {
+  try {
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    
+    if (error) throw error;
+    
+    return {
+      status: 'success',
+      message: `Found ${buckets.length} storage buckets.`,
+      buckets: buckets.map(bucket => bucket.name),
+    };
+  } catch (error) {
+    console.error('Error retrieving storage buckets:', error);
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+};
+
+// Function to test auth functionality
+export const testAuth = async (): Promise<{
+  status: 'success' | 'error';
+  message: string;
+}> => {
+  try {
+    const { data } = await supabase.auth.getSession();
+    
+    if (data.session) {
+      return {
+        status: 'success',
+        message: `User is authenticated. User ID: ${data.session.user.id}`,
+      };
+    } else {
+      return {
+        status: 'success',
+        message: 'No active session. User is not authenticated.',
+      };
+    }
+  } catch (error) {
+    console.error('Auth test error:', error);
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+};
+
+// Add test functions for each table
+export const testBooksTable = async (): Promise<{
+  status: 'success' | 'error';
+  message: string;
+  count?: number;
+}> => {
+  try {
+    const { data, error } = await supabase.from('books').select('id');
+    
+    if (error) throw error;
+    
+    return {
+      status: 'success',
+      message: `Books table exists with ${data?.length || 0} records.`,
+      count: data?.length || 0,
+    };
+  } catch (error) {
+    console.error('Books table test error:', error);
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
 };

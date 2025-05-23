@@ -34,8 +34,8 @@ export const getTranslation = (key: string, language: 'en' | 'hi'): string => {
       hi: 'सभी देखें'
     },
     'footer.copyright': {
-      en: '© 2024 BookBites. All rights reserved.',
-      hi: '© 2024 BookBites. सर्वाधिकार सुरक्षित।'
+      en: '© 2025 BookBites. All rights reserved.',
+      hi: '© 2025 BookBites. सर्वाधिकार सुरक्षित।'
     },
     'footer.terms': {
       en: 'Terms of Service',
@@ -77,6 +77,10 @@ export const getTranslation = (key: string, language: 'en' | 'hi'): string => {
       en: 'Library',
       hi: 'लाइब्रेरी'
     },
+    'nav.bundles': {
+      en: 'Premium Collections',
+      hi: 'प्रीमियम संग्रह'
+    },
     'nav.search': {
       en: 'Search books...',
       hi: 'किताबें खोजें...'
@@ -84,6 +88,14 @@ export const getTranslation = (key: string, language: 'en' | 'hi'): string => {
     'user.login': {
       en: 'Login',
       hi: 'लॉगिन'
+    },
+    'user.loginTitle': {
+      en: 'Welcome Back',
+      hi: 'वापसी पर स्वागत है'
+    },
+    'user.loginSubtitle': {
+      en: 'Sign in to access your book summaries',
+      hi: 'अपने पुस्तक सारांश देखने के लिए साइन इन करें'
     },
     'user.loggingIn': {
       en: 'Logging in...',
@@ -145,9 +157,25 @@ export const getTranslation = (key: string, language: 'en' | 'hi'): string => {
       en: 'Full Name',
       hi: 'पूरा नाम'
     },
+    'user.address': {
+      en: 'Address',
+      hi: 'पता'
+    },
+    'user.dateOfBirth': {
+      en: 'Date of Birth',
+      hi: 'जन्म तिथि'
+    },
     'user.confirmPassword': {
       en: 'Confirm Password',
       hi: 'पासवर्ड की पुष्टि करें'
+    },
+    'user.passwordCriteria': {
+      en: 'Password must be at least 8 characters long with a mix of letters, numbers, and symbols',
+      hi: 'पासवर्ड कम से कम 8 अक्षर लंबा होना चाहिए और उसमें अक्षर, अंक और प्रतीक का मिश्रण होना चाहिए'
+    },
+    'user.resetPassword': {
+      en: 'Reset Password',
+      hi: 'पासवर्ड रीसेट करें'
     },
     'book.addToLibrary': {
       en: 'Add',

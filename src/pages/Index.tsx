@@ -16,6 +16,9 @@ import CategorySection from "@/components/sections/CategorySection";
 import BookCarousel from "@/components/books/BookCarousel";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Fallback image for books without covers
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=450&q=80";
+
 const Index = () => {
   const { t } = useTranslation();
   const { language } = useGlobalContext();
@@ -38,6 +41,14 @@ const Index = () => {
     books: freeBooks, 
     loading: loadingFreeBooks 
   } = useFreeBooks(language);
+
+  // Ensure all books have valid cover images
+  const ensureValidImages = (books: any[]) => {
+    return books.map(book => ({
+      ...book,
+      coverImage: book.coverImage || FALLBACK_IMAGE
+    }));
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -65,7 +76,7 @@ const Index = () => {
             ) : (
               <BookCarousel 
                 title={t('section.trending')} 
-                books={trendingBooks}
+                books={ensureValidImages(trendingBooks)}
                 viewAllLink="/browse?sort=popular" 
               />
             )}
@@ -92,7 +103,7 @@ const Index = () => {
             ) : (
               <BookCarousel 
                 title={t('section.newReleases')} 
-                books={newReleases}
+                books={ensureValidImages(newReleases)}
                 viewAllLink="/browse?sort=newest" 
               />
             )}
@@ -119,12 +130,17 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {freeBooks.map((book) => (
+                  {ensureValidImages(freeBooks).map((book) => (
                     <div key={book.id}>
                       <img 
                         src={book.coverImage}
                         alt={book.title}
                         className="aspect-[2/3] w-full object-cover rounded-md shadow-md"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = FALLBACK_IMAGE;
+                        }}
                       />
                       <h3 className="font-medium mt-2 line-clamp-1">{book.title}</h3>
                       <p className="text-sm text-muted-foreground">{book.author}</p>

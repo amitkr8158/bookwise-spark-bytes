@@ -7,6 +7,7 @@ export interface SignUpData {
   email: string;
   password: string;
   name: string;
+  metadata?: Record<string, any>;
 }
 
 // Interface for login data
@@ -24,13 +25,14 @@ export interface UserProfile {
 }
 
 // Sign up a new user
-export const signUp = async ({ email, password, name }: SignUpData): Promise<AuthResponse> => {
+export const signUp = async ({ email, password, name, metadata = {} }: SignUpData): Promise<AuthResponse> => {
   return await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
-        full_name: name
+        full_name: name,
+        ...metadata
       }
     }
   });
@@ -105,4 +107,51 @@ export const isAdmin = async (userId: string): Promise<boolean> => {
 // Listen to auth changes
 export const onAuthStateChange = (callback: (event: string, session: Session | null) => void) => {
   return supabase.auth.onAuthStateChange(callback);
+};
+
+// Create user accounts
+export const createDefaultUsers = async (): Promise<{success: boolean, message: string}> => {
+  try {
+    // Create user account
+    const { error: userError } = await supabase.auth.admin.createUser({
+      email: 'user@example.com',
+      password: 'user123',
+      email_confirm: true,
+      user_metadata: {
+        full_name: 'Regular User'
+      }
+    });
+    
+    if (userError) throw userError;
+    
+    // Create admin account
+    const { error: adminError } = await supabase.auth.admin.createUser({
+      email: 'admin@example.com',
+      password: 'admin123',
+      email_confirm: true,
+      user_metadata: {
+        full_name: 'Admin User'
+      }
+    });
+    
+    if (adminError) throw adminError;
+    
+    // Set admin role for admin user
+    const { data: adminUser } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', 'admin@example.com')
+      .single();
+    
+    if (adminUser) {
+      await supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('id', adminUser.id);
+    }
+    
+    return { success: true, message: 'Default users created successfully' };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
 };

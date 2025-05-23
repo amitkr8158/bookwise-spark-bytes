@@ -12,6 +12,8 @@ import { toast } from "@/components/ui/use-toast";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { signUp } from "@/services/auth/authService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 const Signup = () => {
   const { t } = useTranslation();
@@ -19,9 +21,19 @@ const Signup = () => {
   const { language, isAuthenticated } = useGlobalContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Password validation
+  const [passwordValid, setPasswordValid] = useState({
+    length: false,
+    letter: false,
+    number: false,
+    symbol: false
+  });
   
   // Track page view
   usePageViewTracking('/signup', 'Sign Up');
@@ -33,8 +45,30 @@ const Signup = () => {
     }
   }, [isAuthenticated, navigate]);
   
+  // Check password requirements as user types
+  useEffect(() => {
+    setPasswordValid({
+      length: password.length >= 8,
+      letter: /[a-zA-Z]/.test(password),
+      number: /\d/.test(password),
+      symbol: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    });
+  }, [password]);
+  
+  // Check if all password requirements are met
+  const allPasswordReqsMet = Object.values(passwordValid).every(Boolean);
+  
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!allPasswordReqsMet) {
+      toast({
+        title: "Invalid password",
+        description: "Your password doesn't meet all requirements",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (password !== confirmPassword) {
       toast({
@@ -48,15 +82,26 @@ const Signup = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await signUp({ email, password, name });
+      const { data, error } = await signUp({ 
+        email, 
+        password, 
+        name,
+        // Including additional data
+        metadata: {
+          address,
+          date_of_birth: dateOfBirth
+        }
+      });
       
       if (error) {
         throw error;
       }
       
+      // Show success toast prominently
       toast({
-        title: "Account created",
+        title: "Account created successfully!",
         description: "You can now log in with your new account",
+        variant: "default",
       });
       
       navigate("/login");
@@ -113,6 +158,28 @@ const Signup = () => {
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="address">{t('user.address')}</Label>
+                <Input
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="123 Main St, City, Country"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="dob">{t('user.dateOfBirth')}</Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="password">{t('user.password')}</Label>
                 <Input
                   id="password"
@@ -122,6 +189,29 @@ const Signup = () => {
                   placeholder="••••••••"
                   required
                 />
+                
+                {/* Password requirements */}
+                <div className="text-sm space-y-1 mt-2">
+                  <p className="font-medium text-muted-foreground">{t('user.passwordCriteria')}</p>
+                  <ul className="space-y-1 text-sm">
+                    <li className={`flex items-center ${passwordValid.length ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {passwordValid.length ? <CheckCircle2 className="h-3 w-3 mr-2" /> : <span className="h-3 w-3 mr-2 rounded-full border" />}
+                      At least 8 characters
+                    </li>
+                    <li className={`flex items-center ${passwordValid.letter ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {passwordValid.letter ? <CheckCircle2 className="h-3 w-3 mr-2" /> : <span className="h-3 w-3 mr-2 rounded-full border" />}
+                      Contains letters
+                    </li>
+                    <li className={`flex items-center ${passwordValid.number ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {passwordValid.number ? <CheckCircle2 className="h-3 w-3 mr-2" /> : <span className="h-3 w-3 mr-2 rounded-full border" />}
+                      Contains numbers
+                    </li>
+                    <li className={`flex items-center ${passwordValid.symbol ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {passwordValid.symbol ? <CheckCircle2 className="h-3 w-3 mr-2" /> : <span className="h-3 w-3 mr-2 rounded-full border" />}
+                      Contains symbols (e.g. !@#$%)
+                    </li>
+                  </ul>
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -141,7 +231,7 @@ const Signup = () => {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isLoading}
+                disabled={isLoading || !allPasswordReqsMet}
               >
                 {isLoading ? t('user.creating') : t('user.createAccount')}
               </Button>

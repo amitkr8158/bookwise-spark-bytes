@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -288,12 +289,6 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-
-                <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md">
-                  <h3 className="font-medium mb-1">Demo Accounts:</h3>
-                  <p><strong>User:</strong> user@example.com / user123</p>
-                  <p><strong>Admin:</strong> admin@example.com / admin123</p>
-                </div>
                 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? t('user.loggingIn') : t('user.login')}
