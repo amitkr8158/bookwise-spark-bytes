@@ -1,4 +1,3 @@
-
 import { PostgrestError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -184,6 +183,51 @@ export const testAuthFlow = async (email: string, password: string): Promise<Rec
   }
   
   return results;
+};
+
+// Safely use table names with type assertions
+export const testDatabaseTables = async () => {
+  try {
+    console.log('Testing database tables...');
+
+    // List of tables to check - use hardcoded strings as literals
+    const tables = [
+      'books',
+      'categories',
+      'profiles',
+      'book_reviews',
+      'bookmarks'
+    ] as const;
+    
+    const results = [];
+
+    // Check each table
+    for (const table of tables) {
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .limit(1);
+        
+      if (error) {
+        results.push({ table, exists: false, error: error.message });
+      } else {
+        results.push({ table, exists: true, count: data?.length || 0 });
+      }
+    }
+
+    return {
+      success: true,
+      message: 'Database tables checked',
+      results
+    };
+  } catch (error) {
+    console.error('Error testing database tables:', error);
+    return {
+      success: false,
+      message: 'Error testing database tables',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
 };
 
 // Add test functions for each table

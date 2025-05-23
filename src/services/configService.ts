@@ -21,10 +21,11 @@ export interface NotificationSettings {
   notifyNewReleases: boolean;
   notifyDiscounts: boolean;
   salesNotificationsEnabled: boolean;
-  frequency: string;
+  frequency: number;
   realSales: boolean;
   displayDuration: number;
-  position: string;
+  position: "bottom-left" | "bottom-right" | "top-left" | "top-right";
+  minPurchaseAmount: number;
 }
 
 export interface SubscriptionSettings {
@@ -125,10 +126,11 @@ export const useNotificationSettings = () => {
     notifyNewReleases: true,
     notifyDiscounts: true,
     salesNotificationsEnabled: true,
-    frequency: 'daily',
+    frequency: 60,
     realSales: true,
     displayDuration: 5,
-    position: 'bottom-right'
+    position: "bottom-right",
+    minPurchaseAmount: 0
   });
   
   const updateSettings = (newSettings: Partial<NotificationSettings>) => {

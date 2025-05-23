@@ -1,9 +1,9 @@
 
 import React, { useEffect, useState } from "react";
-import { getReviewsByBookId } from "@/services/reviews/reviewService";
+import { getReviewsByBookId, Review as ServiceReview } from "@/services/reviews/reviewService";
 import ReviewList from "@/components/reviews/ReviewList";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Review } from "@/services/reviews/reviewService";
+import { Review } from "@/components/reviews/ReviewCard";
 
 interface BookReviewsProps {
   bookId: string;
@@ -23,15 +23,17 @@ const BookReviews: React.FC<BookReviewsProps> = ({ bookId }) => {
         if (result.error) {
           setError(result.error);
         } else {
-          // Cast the reviews to ensure they have the right properties
-          const reviewsWithCorrectProps = result.reviews.map(review => ({
-            ...review,
+          // Convert service reviews to the format expected by ReviewList
+          const reviewsWithCorrectProps: Review[] = result.reviews.map(review => ({
+            id: review.id,
             userId: review.user_id,
             bookId: review.book_id,
             userName: review.user_name || 'Anonymous',
-            content: review.review_text,
+            userAvatar: undefined,
+            rating: review.rating,
+            content: review.review_text || '',
             createdAt: new Date(review.created_at),
-            isVisible: review.is_visible,
+            isVisible: review.is_visible || false,
             isTopReview: review.is_top_review || false
           }));
           setReviews(reviewsWithCorrectProps);

@@ -12,6 +12,7 @@ import {
   useSalesNotifications,
   Quote
 } from "@/services/configService";
+import { Review as ServiceReview } from "@/services/reviews/reviewService";
 import { Review } from "@/components/reviews/ReviewCard";
 
 const AdminTabs: React.FC = () => {
@@ -48,7 +49,7 @@ const AdminTabs: React.FC = () => {
     userName: review.user_name || 'Anonymous',
     userAvatar: undefined,
     rating: review.rating,
-    content: review.review_text,
+    content: review.review_text || '',
     createdAt: new Date(review.created_at),
     isVisible: review.is_visible || false,
     isTopReview: review.is_top_review || false
@@ -73,7 +74,7 @@ const AdminTabs: React.FC = () => {
       <TabsContent value="notifications" className="space-y-4">
         <NotificationManager 
           settings={notificationSettings}
-          onSettingsChange={updateNotificationSettings}
+          onSettingsChange={(settings) => updateNotificationSettings(settings)}
           onTestNotification={showTestNotification}
         />
       </TabsContent>
@@ -84,7 +85,7 @@ const AdminTabs: React.FC = () => {
           quotes={quotes}
           onSettingsChange={updateSubscriptionSettings}
           onAddQuote={addQuote}
-          onEditQuote={(updatedQuote: Quote) => updateQuote(updatedQuote.id, updatedQuote)}
+          onEditQuote={(quote: Quote) => updateQuote(quote.id, quote)}
           onDeleteQuote={deleteQuote}
         />
       </TabsContent>
