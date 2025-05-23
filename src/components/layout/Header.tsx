@@ -22,17 +22,20 @@ const Header = () => {
       setIsAuthenticated(!!session);
       
       if (session?.user) {
-        getUserProfile(session.user.id).then(({ data }) => {
-          if (data) {
-            setUser({
-              id: session.user.id,
-              name: data.full_name || session.user.email?.split('@')[0] || '',
-              email: session.user.email || '',
-              role: data.role || 'user',
-              avatar: data.avatar_url || undefined,
-            });
-          }
-        });
+        // Use setTimeout to avoid Supabase auth deadlock
+        setTimeout(() => {
+          getUserProfile(session.user.id).then(({ data }) => {
+            if (data) {
+              setUser({
+                id: session.user.id,
+                name: data.full_name || session.user.email?.split('@')[0] || '',
+                email: session.user.email || '',
+                role: data.role || 'user',
+                avatar: data.avatar_url || undefined,
+              });
+            }
+          });
+        }, 0);
       }
     });
     
@@ -43,6 +46,7 @@ const Header = () => {
         setIsAuthenticated(isAuth);
         
         if (session?.user) {
+          // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(() => {
             getUserProfile(session.user.id).then(({ data }) => {
               if (data) {
@@ -55,7 +59,7 @@ const Header = () => {
                 });
               }
             });
-          }, 0); // Use setTimeout to avoid Supabase auth deadlock
+          }, 0);
         } else {
           setUser(null);
         }
