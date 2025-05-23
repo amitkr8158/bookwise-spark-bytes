@@ -1,10 +1,12 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
 import { useToast } from "@/components/ui/use-toast";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { format } from "date-fns";
+import { signOut, getUserProfile } from "@/services/auth/authService";
+import { getUserPurchasedBooks } from "@/services/books/bookService";
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -32,36 +34,72 @@ const Profile = () => {
     isAuthenticated, 
     user, 
     setUser, 
-    setIsAuthenticated, 
-    purchasedItems 
+    setIsAuthenticated
   } = useGlobalContext();
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [purchasedBooks, setPurchasedBooks] = useState<any[]>([]);
   
   // Track page view
   usePageViewTracking('/profile', 'User Profile');
   
   // Redirect to login if not authenticated
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
   
+  // Fetch purchased books
+  useEffect(() => {
+    const fetchPurchasedItems = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { purchases, error } = await getUserPurchasedBooks(user.id);
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (purchases) {
+          setPurchasedBooks(purchases);
+        }
+      } catch (error) {
+        console.error("Error fetching purchased items:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPurchasedItems();
+  }, [user]);
+  
   // Handle user logout
-  const handleLogout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    
-    toast({
-      title: "Logged out successfully",
-      description: "You have been logged out of your account.",
-    });
-    
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   // Separate books and bundles
-  const purchasedBooks = purchasedItems.filter(item => item.type === 'book');
-  const purchasedBundles = purchasedItems.filter(item => item.type === 'bundle');
+  const purchasedBundles: any[] = []; // To be implemented with bundles table
   
   // Formats date string
   const formatDate = (dateString: string) => {
@@ -167,7 +205,11 @@ const Profile = () => {
                 </TabsList>
                 
                 <TabsContent value="books" className="py-4">
-                  {purchasedBooks.length === 0 ? (
+                  {isLoading ? (
+                    <div className="flex justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : purchasedBooks.length === 0 ? (
                     <div className="text-center py-12 bg-muted/50 rounded-lg">
                       <Book className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                       <h3 className="text-xl font-medium mb-2">No books purchased yet</h3>
@@ -194,7 +236,7 @@ const Profile = () => {
                               <TableCell className="font-medium">
                                 <div className="flex items-center gap-3">
                                   <img 
-                                    src={book.coverImage} 
+                                    src={book.cover_image || "https://via.placeholder.com/90x120?text=Cover"}
                                     alt={book.title}
                                     className="h-12 w-9 object-cover rounded"
                                   />
@@ -233,7 +275,11 @@ const Profile = () => {
                 </TabsContent>
                 
                 <TabsContent value="bundles" className="py-4">
-                  {purchasedBundles.length === 0 ? (
+                  {isLoading ? (
+                    <div className="flex justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
                     <div className="text-center py-12 bg-muted/50 rounded-lg">
                       <Package className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                       <h3 className="text-xl font-medium mb-2">No bundles purchased yet</h3>
@@ -243,47 +289,6 @@ const Profile = () => {
                       <Button asChild>
                         <Link to="/bundles">Browse Bundles</Link>
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="bg-card border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[300px]">Bundle</TableHead>
-                            <TableHead>Purchase Date</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {purchasedBundles.map(bundle => (
-                            <TableRow key={bundle.id}>
-                              <TableCell className="font-medium">
-                                <div className="flex items-center gap-3">
-                                  <img 
-                                    src={bundle.coverImage} 
-                                    alt={bundle.title}
-                                    className="h-12 w-9 object-cover rounded"
-                                  />
-                                  <span>{bundle.title}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{formatDate(bundle.purchaseDate)}</TableCell>
-                              <TableCell className="text-right">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="flex items-center gap-1"
-                                  asChild
-                                >
-                                  <Link to={`/bundles`}>
-                                    <ExternalLink className="w-4 h-4" /> View
-                                  </Link>
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
                     </div>
                   )}
                 </TabsContent>

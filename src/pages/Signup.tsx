@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGlobalContext } from "@/contexts/GlobalContext";
@@ -9,14 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { createClient } from "@supabase/supabase-js";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { signUp } from "@/services/auth/authService";
 
 const Signup = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { language } = useGlobalContext();
+  const { language, isAuthenticated } = useGlobalContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,11 +26,12 @@ const Signup = () => {
   // Track page view
   usePageViewTracking('/signup', 'Sign Up');
   
-  // Initialize Supabase client (would be replaced with actual integration)
-  const supabase = createClient(
-    'https://your-project-url.supabase.co',
-    'your-public-anon-key'
-  );
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/profile');
+    }
+  }, [isAuthenticated, navigate]);
   
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,23 +48,23 @@ const Signup = () => {
     setIsLoading(true);
     
     try {
-      // Mock successful signup for demonstration
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data, error } = await signUp({ email, password, name });
       
-      // In real implementation, this would use Supabase auth
-      // const { user, error } = await supabase.auth.signUp({ email, password })
+      if (error) {
+        throw error;
+      }
       
       toast({
         title: "Account created",
-        description: "Your account has been created successfully",
+        description: "You can now log in with your new account",
       });
       
-      navigate("/library");
-    } catch (error) {
+      navigate("/login");
+    } catch (error: any) {
       console.error("Signup error:", error);
       toast({
         title: "Signup failed",
-        description: "There was an error creating your account",
+        description: error.message || "There was an error creating your account",
         variant: "destructive",
       });
     } finally {

@@ -1,37 +1,48 @@
 
 import React from "react";
-import { useTranslation } from "@/hooks/useTranslation";
+import BookManager from "./admin/BookManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
 
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import AdminTabs from "@/components/admin/AdminTabs";
-
 const Admin = () => {
-  const { t } = useTranslation();
-  
   // Track page view
-  usePageViewTracking('/admin', 'Admin - Book Management');
-  
+  usePageViewTracking('/admin', 'Admin Dashboard');
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <main className="flex-grow">
-        <div className="container px-4 py-12">
-          <div className="mb-8">
-            <h1 className="text-3xl font-serif font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your book catalog, reviews, notifications and subscriptions
-            </p>
-          </div>
-          
-          <AdminTabs />
+    <AdminLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-muted-foreground">
+            Manage your platform content and settings
+          </p>
         </div>
-      </main>
-      
-      <Footer />
-    </div>
+
+        <Tabs defaultValue="books" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="books">Books</TabsTrigger>
+            <TabsTrigger value="subscriptions">Email Subscriptions</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          </TabsList>
+          <TabsContent value="books">
+            <BookManager />
+          </TabsContent>
+          <TabsContent value="subscriptions">
+            <div className="space-y-4 mt-4">
+              <h2 className="text-xl font-semibold">Subscription Management</h2>
+              <p>Subscription management will be enabled soon.</p>
+            </div>
+          </TabsContent>
+          <TabsContent value="reviews">
+            <div className="space-y-4 mt-4">
+              <h2 className="text-xl font-semibold">Review Management</h2>
+              <p>Review management will be enabled soon.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AdminLayout>
   );
 };
 

@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
@@ -32,6 +31,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { signIn, getUserProfile } from "@/services/auth/authService";
+import { supabase } from "@/integrations/supabase/client";
 
 // Schema for login form validation
 const loginSchema = z.object({
@@ -44,63 +45,24 @@ const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
 });
 
-// Mock admin user
-const adminUser = {
-  id: "admin-user-1",
-  name: "Admin User",
-  email: "admin@example.com",
-  password: "admin123",
-  role: "admin" as const,
-};
-
-// Mock regular user
-const regularUser = {
-  id: "user-1",
-  name: "John Doe",
-  email: "user@example.com",
-  password: "user123",
-  role: "user" as const,
-};
-
-// Mock purchased items for demo
-const samplePurchasedItems = [
-  {
-    id: "1",
-    title: "Atomic Habits",
-    type: "book" as const,
-    coverImage: "https://m.media-amazon.com/images/I/81wgcld4wxL._AC_UF1000,1000_QL80_.jpg",
-    purchaseDate: "2023-04-15",
-    price: 12.99
-  },
-  {
-    id: "2",
-    title: "The Psychology of Money",
-    type: "book" as const,
-    coverImage: "https://m.media-amazon.com/images/I/71TRUbzcvaL._AC_UF1000,1000_QL80_.jpg",
-    purchaseDate: "2023-05-20",
-    price: 14.99
-  },
-  {
-    id: "business-bundle",
-    title: "Business Essentials Bundle",
-    type: "bundle" as const,
-    coverImage: "https://m.media-amazon.com/images/I/81wgcld4wxL._AC_UF1000,1000_QL80_.jpg",
-    purchaseDate: "2023-06-10",
-    price: 39.99
-  }
-];
-
 const Login = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { setIsAuthenticated, setUser, setPurchasedItems } = useGlobalContext();
+  const { setIsAuthenticated, setUser, setPurchasedItems, isAuthenticated } = useGlobalContext();
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   
   // Track page view
   usePageViewTracking('/login', 'Login');
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/profile');
+    }
+  }, [isAuthenticated, navigate]);
   
   // Login form
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -120,78 +82,83 @@ const Login = () => {
   });
   
   // Handle login form submission
-  const onSubmit = (data: z.infer<typeof loginSchema>) => {
+  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     
-    // Simple mock authentication (in real app, this would be an API call)
-    setTimeout(() => {
-      console.log("Login data:", data);
+    try {
+      const { data: authData, error } = await signIn({ 
+        email: data.email, 
+        password: data.password 
+      });
       
-      // Check if admin user
-      if (data.email === adminUser.email && data.password === adminUser.password) {
+      if (error) {
+        throw error;
+      }
+      
+      if (authData.user) {
+        const { data: profileData, error: profileError } = await getUserProfile(authData.user.id);
+        
+        if (profileError) {
+          console.error("Profile error:", profileError);
+        }
+        
         setIsAuthenticated(true);
         setUser({
-          id: adminUser.id,
-          name: adminUser.name,
-          email: adminUser.email,
-          role: adminUser.role,
+          id: authData.user.id,
+          name: profileData?.full_name || authData.user.email?.split('@')[0] || '',
+          email: authData.user.email || '',
+          role: profileData?.role || 'user',
+          avatar: profileData?.avatar_url || undefined,
         });
-        setPurchasedItems(samplePurchasedItems);
         
         toast({
           title: "Login Successful",
-          description: "Welcome back, Admin!",
+          description: `Welcome back${profileData?.full_name ? ', ' + profileData.full_name : ''}!`,
         });
         
         navigate('/profile');
       }
-      // Check if regular user
-      else if (data.email === regularUser.email && data.password === regularUser.password) {
-        setIsAuthenticated(true);
-        setUser({
-          id: regularUser.id,
-          name: regularUser.name,
-          email: regularUser.email,
-          role: regularUser.role,
-        });
-        setPurchasedItems(samplePurchasedItems);
-        
-        toast({
-          title: "Login Successful",
-          description: "Welcome back!",
-        });
-        
-        navigate('/profile');
-      }
-      // Invalid login
-      else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
-          variant: "destructive",
-        });
-      }
-      
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
   
   // Handle forgot password form submission
-  const onForgotPasswordSubmit = (data: z.infer<typeof forgotPasswordSchema>) => {
+  const onForgotPasswordSubmit = async (data: z.infer<typeof forgotPasswordSchema>) => {
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Forgot password data:", data);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        throw error;
+      }
       
       toast({
         title: "Password Reset Email Sent",
         description: `Instructions have been sent to ${data.email}`,
       });
       
-      setIsLoading(false);
       setResetSent(true);
-    }, 1500);
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "There was an error sending the reset link",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -324,8 +291,8 @@ const Login = () => {
 
                 <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md">
                   <h3 className="font-medium mb-1">Demo Accounts:</h3>
-                  <p><strong>Admin:</strong> admin@example.com / admin123</p>
                   <p><strong>User:</strong> user@example.com / user123</p>
+                  <p><strong>Admin:</strong> admin@example.com / admin123</p>
                 </div>
                 
                 <Button type="submit" className="w-full" disabled={isLoading}>

@@ -8,3 +8,5 @@ export * from './storage/localStorage';
 export * from './notifications/notificationService';
 export * from './quotes/quoteService';
 export * from './reviews/reviewService';
+export * from './auth/authService';
+export * from './books/bookService';
