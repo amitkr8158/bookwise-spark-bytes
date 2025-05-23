@@ -39,7 +39,8 @@ export const testSupabaseIntegration = async () => {
   
   // Log test results summary
   console.log("📊 Supabase integration test summary:", testResults);
-  console.log("🔗 Supabase connection URL:", supabase.supabaseUrl);
+  // Use the URL from the client configuration instead of the protected supabaseUrl property
+  console.log("🔗 Supabase connection URL:", process.env.SUPABASE_URL || "https://xqwmpmsxvhdsscvcmgxi.supabase.co");
   
   return testResults;
 };
