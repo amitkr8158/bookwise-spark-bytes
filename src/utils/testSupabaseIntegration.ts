@@ -1,5 +1,5 @@
 
-import { PostgrestError, createClient } from '@supabase/supabase-js';
+import { PostgrestError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 // Function to test Supabase connection
@@ -32,12 +32,10 @@ export const getTablesInfo = async (): Promise<{
   data?: Record<string, number>;
 }> => {
   try {
-    // Get list of public tables
-    const { data: tablesList, error: tablesError } = await supabase.rpc('get_tables');
+    // Get list of public tables using hardcoded table names
+    const tables = ['book_reviews', 'books', 'bookmarks', 'categories', 'bundle_books', 'bundles', 'bundle_purchases', 'cart_items', 'carts', 'profiles', 'reading_progress', 'user_preferences', 'user_purchases'];
     
-    if (tablesError) throw tablesError;
-    
-    if (!tablesList || tablesList.length === 0) {
+    if (!tables || tables.length === 0) {
       return {
         status: 'success',
         message: 'No tables found in the public schema.',
@@ -47,21 +45,21 @@ export const getTablesInfo = async (): Promise<{
     
     // Get row counts for each table
     const counts: Record<string, number> = {};
-    for (const table of tablesList) {
+    for (const table of tables) {
       const { data: countData, error: countError } = await supabase
-        .from(table as string)
+        .from(table)
         .select('count');
       
       if (countError) {
-        counts[table as string] = -1; // Error counting
+        counts[table] = -1; // Error counting
       } else {
-        counts[table as string] = countData ? countData.length : 0;
+        counts[table] = countData ? countData.length : 0;
       }
     }
     
     return {
       status: 'success',
-      message: `Found ${tablesList.length} tables in the public schema.`,
+      message: `Found ${tables.length} tables in the public schema.`,
       data: counts,
     };
   } catch (error) {
@@ -124,6 +122,67 @@ export const testAuth = async (): Promise<{
       message: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
+};
+
+// Function for testing full auth flow
+export const testAuthFlow = async (email: string, password: string): Promise<Record<string, { success: boolean; message: string }>> => {
+  const results: Record<string, { success: boolean; message: string }> = {};
+  
+  // Test signup
+  try {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    
+    if (error) {
+      results.signup = { success: false, message: error.message };
+    } else {
+      results.signup = { success: true, message: 'Signup successful or user already exists (check email for confirmation)' };
+    }
+  } catch (error) {
+    results.signup = { 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Unknown signup error'
+    };
+  }
+  
+  // Test signin
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) {
+      results.signin = { success: false, message: error.message };
+    } else {
+      results.signin = { success: true, message: 'Sign in successful' };
+    }
+  } catch (error) {
+    results.signin = { 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Unknown signin error'
+    };
+  }
+  
+  // Test profile fetch
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    
+    if (error || !data.user) {
+      results.profile = { success: false, message: error?.message || 'No user found' };
+    } else {
+      results.profile = { success: true, message: `User profile retrieved: ${data.user.email}` };
+    }
+  } catch (error) {
+    results.profile = { 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Unknown profile error'
+    };
+  }
+  
+  return results;
 };
 
 // Add test functions for each table

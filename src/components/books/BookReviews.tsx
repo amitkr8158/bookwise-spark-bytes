@@ -17,15 +17,19 @@ const BookReviews: React.FC<BookReviewsProps> = ({ bookId }) => {
   useEffect(() => {
     const fetchReviews = async () => {
       setLoading(true);
-      const { reviews, error } = await getReviewsByBookId(bookId);
-      
-      if (error) {
-        setError(error);
-      } else {
-        setReviews(reviews);
+      try {
+        const result = await getReviewsByBookId(bookId);
+        
+        if (result.error) {
+          setError(result.error);
+        } else {
+          setReviews(result.reviews);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
     
     fetchReviews();

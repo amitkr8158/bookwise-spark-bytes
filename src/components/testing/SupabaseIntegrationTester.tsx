@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,12 +5,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { testSupabaseIntegration, testAuthFlow } from "@/utils/testSupabaseIntegration";
+import { testSupabaseConnection, testAuthFlow } from "@/utils/testSupabaseIntegration";
 import { toast } from "@/components/ui/use-toast";
 
 const SupabaseIntegrationTester = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string }> | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { status: 'success' | 'error'; message: string }> | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -20,10 +19,15 @@ const SupabaseIntegrationTester = () => {
   const runTests = async () => {
     setIsLoading(true);
     try {
-      const results = await testSupabaseIntegration();
+      // Run individual tests and compile results
+      const results: Record<string, { status: 'success' | 'error'; message: string }> = {};
+      
+      // Test connection
+      results.connection = await testSupabaseConnection();
+      
+      const allSuccessful = Object.values(results).every(result => result.status === 'success');
       setTestResults(results);
       
-      const allSuccessful = Object.values(results).every(result => result.success);
       toast({
         title: allSuccessful ? "All tests passed" : "Some tests failed",
         description: allSuccessful 
@@ -101,9 +105,9 @@ const SupabaseIntegrationTester = () => {
             <div className="space-y-3 mt-4">
               <h3 className="text-lg font-medium">Test Results</h3>
               {Object.entries(testResults).map(([key, result]) => (
-                <Alert key={key} variant={result.success ? "default" : "destructive"}>
+                <Alert key={key} variant={result.status === 'success' ? "default" : "destructive"}>
                   <div className="flex items-center">
-                    {result.success ? (
+                    {result.status === 'success' ? (
                       <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
                     ) : (
                       <AlertCircle className="h-4 w-4 text-red-500 mr-2" />

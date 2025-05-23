@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import ReviewCard, { Review } from "./ReviewCard";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { addReview } from "@/services/reviews/reviewService";
 import { useToast } from "@/components/ui/use-toast";
-import StarRating from "./StarRating"; // We'll create this next
+import StarRating from "./StarRating";
 
 interface ReviewListProps {
   bookId: string;
@@ -31,8 +30,8 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId, reviews }) => {
   
   // Filter reviews based on search term and selected tab
   const filteredReviews = reviews.filter(review => {
-    const matchesSearch = review.content.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          review.userName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = review.content?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          review.userName?.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (tabValue === "all") return matchesSearch && review.isVisible;
     if (tabValue === "top") return matchesSearch && review.isTopReview && review.isVisible;
@@ -65,7 +64,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId, reviews }) => {
     setIsSubmitting(true);
     
     try {
-      const { review, error } = await addReview({
+      const { success, error, review } = await addReview({
         bookId,
         rating,
         content: reviewContent
