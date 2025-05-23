@@ -37,6 +37,26 @@ export const testSupabaseIntegration = async () => {
     console.error("❌ Get books test failed:", error.message);
   }
   
+  // Test 3: Check database tables
+  try {
+    const { data: tablesData, error: tablesError } = await supabase
+      .from('pg_catalog.pg_tables')
+      .select('tablename')
+      .eq('schemaname', 'public');
+      
+    if (tablesError) throw tablesError;
+    
+    const tables = tablesData.map(t => t.tablename).join(', ');
+    testResults.tables = { 
+      success: true, 
+      message: `Found ${tablesData.length} tables in public schema: ${tables}`
+    };
+    console.log("✅ Database tables test:", testResults.tables.message);
+  } catch (error: any) {
+    testResults.tables = { success: false, message: error.message };
+    console.error("❌ Database tables test failed:", error.message);
+  }
+  
   // Log test results summary
   console.log("📊 Supabase integration test summary:", testResults);
   // Use the URL directly from the client configuration to avoid process.env issues
@@ -91,6 +111,15 @@ export const testAuthFlow = async (email: string, password: string) => {
         message: profileError ? profileError.message : "Profile retrieved"
       };
       console.log("✅ Profile test:", testResults.profile.message, profile);
+      
+      // Test to retrieve tables to confirm we've fully connected
+      try {
+        const { data, error } = await supabase.rpc('get_tables');
+        if (error) console.log('RPC error:', error);
+        else console.log('Available tables:', data);
+      } catch (e) {
+        console.log('Tables test error:', e);
+      }
     }
   } catch (error: any) {
     testResults.signin = { success: false, message: error.message };

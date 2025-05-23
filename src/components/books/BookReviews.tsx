@@ -1,16 +1,75 @@
 
-import React from "react";
-import { useReviews } from "@/services/configService";
+import React, { useEffect, useState } from "react";
+import { getReviewsByBookId } from "@/services/reviews/reviewService";
 import ReviewList from "@/components/reviews/ReviewList";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Review } from "@/components/reviews/ReviewCard";
 
 interface BookReviewsProps {
   bookId: string;
 }
 
 const BookReviews: React.FC<BookReviewsProps> = ({ bookId }) => {
-  const { getReviewsByBookId } = useReviews();
-  const bookReviews = getReviewsByBookId(bookId);
-  const visibleReviews = bookReviews.filter(review => review.isVisible);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoading(true);
+      const { reviews, error } = await getReviewsByBookId(bookId);
+      
+      if (error) {
+        setError(error);
+      } else {
+        setReviews(reviews);
+      }
+      
+      setLoading(false);
+    };
+    
+    fetchReviews();
+  }, [bookId]);
+  
+  const visibleReviews = reviews.filter(review => review.isVisible);
+  
+  if (loading) {
+    return (
+      <div className="mt-12">
+        <h2 className="text-2xl font-serif font-bold mb-6">Reader Reviews</h2>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="border rounded-md p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div>
+                  <Skeleton className="h-4 w-32" />
+                  <div className="flex space-x-1 mt-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-4 w-4" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="mt-12">
+        <h2 className="text-2xl font-serif font-bold mb-6">Reader Reviews</h2>
+        <div className="bg-red-50 p-4 rounded-md text-red-600">
+          Error loading reviews: {error}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="mt-12">
