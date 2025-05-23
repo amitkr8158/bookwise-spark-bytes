@@ -6,7 +6,7 @@ export interface BookInput {
   author: string;
   description: string;
   category: string;
-  language: 'en' | 'hi';
+  language: string; // Changed from 'en' | 'hi' to string to match Supabase
   cover_image?: string;
   pdf_url?: string;
   audio_url?: string;
@@ -34,7 +34,7 @@ export const getBooks = async ({
   search,
   sortBy,
 }: {
-  language?: 'en' | 'hi';
+  language?: string;  // Changed from 'en' | 'hi' to string
   category?: string;
   limit?: number;
   offset?: number;

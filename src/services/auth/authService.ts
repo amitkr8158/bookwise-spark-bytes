@@ -20,7 +20,7 @@ export interface UserProfile {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
-  role: 'user' | 'admin';
+  role: string; // Changed from 'user' | 'admin' to string to match Supabase
 }
 
 // Sign up a new user
