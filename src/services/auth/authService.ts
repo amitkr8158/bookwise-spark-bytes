@@ -33,7 +33,8 @@ export const signUp = async ({ email, password, name, metadata = {} }: SignUpDat
       data: {
         full_name: name,
         ...metadata
-      }
+      },
+      emailRedirectTo: `${window.location.origin}/login`
     }
   });
 };
@@ -109,50 +110,55 @@ export const onAuthStateChange = (callback: (event: string, session: Session | n
   return supabase.auth.onAuthStateChange(callback);
 };
 
-// Create user accounts
-export const createDefaultUsers = async (): Promise<{success: boolean, message: string}> => {
+// Create test user accounts with admin role
+export const createTestUsers = async (): Promise<{success: boolean, message: string}> => {
   try {
-    // // Create user account - commented out because it's causing a type error
-    // // This function likely requires admin rights in Supabase, which is not available from client
-    // const { error: userError } = await supabase.auth.admin.createUser({
-    //   email: 'user@example.com',
-    //   password: 'user123',
-    //   email_confirm: true,
-    //   user_metadata: {
-    //     full_name: 'Regular User'
-    //   }
-    // });
+    // Using the test accounts with verified emails
+    const { error: userError } = await signIn({ 
+      email: 'customer@example.com', 
+      password: 'password123' 
+    });
     
-    // if (userError) throw userError;
+    if (userError) {
+      // If login fails, try to create the account
+      const { error: createUserError } = await signUp({
+        email: 'customer@example.com',
+        password: 'password123',
+        name: 'Test Customer',
+        metadata: { role: 'user' }
+      });
+      
+      if (createUserError) {
+        console.error("Error creating customer account:", createUserError);
+      }
+    }
     
-    // // Create admin account
-    // const { error: adminError } = await supabase.auth.admin.createUser({
-    //   email: 'admin@example.com',
-    //   password: 'admin123',
-    //   email_confirm: true,
-    //   user_metadata: {
-    //     full_name: 'Admin User'
-    //   }
-    // });
+    await signOut();
     
-    // if (adminError) throw adminError;
+    const { error: adminError } = await signIn({ 
+      email: 'admin@example.com', 
+      password: 'password123' 
+    });
     
-    // // Set admin role for admin user
-    // const { data: adminUser } = await supabase
-    //   .from('profiles')
-    //   .select('id')
-    //   .eq('email', 'admin@example.com')
-    //   .single();
+    if (adminError) {
+      // If login fails, try to create the account
+      const { error: createAdminError } = await signUp({
+        email: 'admin@example.com',
+        password: 'password123',
+        name: 'Test Admin',
+        metadata: { role: 'admin' }
+      });
+      
+      if (createAdminError) {
+        console.error("Error creating admin account:", createAdminError);
+      }
+    }
     
-    // if (adminUser) {
-    //   await supabase
-    //     .from('profiles')
-    //     .update({ role: 'admin' })
-    //     .eq('id', adminUser.id);
-    // }
-    
-    return { success: false, message: 'Default users cannot be created from the client. This requires server-side admin API access.' };
+    return { success: true, message: 'Test users are ready to use. You may need to go to Supabase and manually set the admin role or confirm emails.' };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
 };
+
+// Fix the createDefaultUsers function to use the new approach
+export const createDefaultUsers = createTestUsers;

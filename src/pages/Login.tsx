@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Mail, Lock, AlertCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -32,7 +32,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { signIn, getUserProfile } from "@/services/auth/authService";
+import { signIn, getUserProfile, createTestUsers } from "@/services/auth/authService";
 import { supabase } from "@/integrations/supabase/client";
 
 // Schema for login form validation
@@ -54,6 +54,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Track page view
   usePageViewTracking('/login', 'Login');
@@ -93,10 +94,15 @@ const Login = () => {
       });
       
       if (error) {
+        // If email is not confirmed but credentials are valid, show a more helpful error
+        if (error.message?.includes("Email not confirmed")) {
+          throw new Error("Your email has not been verified. Please check your inbox for a verification email.");
+        }
         throw error;
       }
       
       if (authData.user) {
+        // Get user profile data to set role
         const { data: profileData, error: profileError } = await getUserProfile(authData.user.id);
         
         if (profileError) {
@@ -121,11 +127,37 @@ const Login = () => {
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid email or password. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Special handling for test users
+      if ((data.email === "customer@example.com" || data.email === "admin@example.com") && 
+          data.password === "password123") {
+        toast({
+          title: "Creating test accounts",
+          description: "Setting up the test accounts for you...",
+        });
+        
+        const { success, message } = await createTestUsers();
+        
+        if (success) {
+          toast({
+            title: "Test Accounts Ready",
+            description: "Please try logging in again with the same credentials.",
+          });
+          form.reset();
+        } else {
+          toast({
+            title: "Login Failed",
+            description: message || "Could not create test accounts. Please check Supabase settings.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Login Failed",
+          description: error.message || "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -278,11 +310,22 @@ const Login = () => {
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input 
-                            type="password" 
+                            type={showPassword ? "text" : "password"}
                             placeholder="••••••••" 
-                            className="pl-10" 
+                            className="pl-10 pr-10" 
                             {...field} 
                           />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -303,6 +346,24 @@ const Login = () => {
                   {t('user.signup')}
                 </Link>
               </p>
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm text-center text-muted-foreground mb-3">Test Accounts:</p>
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  form.setValue('email', 'customer@example.com');
+                  form.setValue('password', 'password123');
+                }}>
+                  Use Customer Account
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  form.setValue('email', 'admin@example.com');
+                  form.setValue('password', 'password123');
+                }}>
+                  Use Admin Account
+                </Button>
+              </div>
             </div>
           </div>
         </div>

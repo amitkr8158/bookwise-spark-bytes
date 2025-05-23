@@ -13,7 +13,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { signUp } from "@/services/auth/authService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 
 const Signup = () => {
   const { t } = useTranslation();
@@ -22,10 +22,13 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  const [mobile, setMobile] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // Password validation
   const [passwordValid, setPasswordValid] = useState({
@@ -89,6 +92,7 @@ const Signup = () => {
         // Including additional data
         metadata: {
           address,
+          mobile,
           date_of_birth: dateOfBirth
         }
       });
@@ -135,7 +139,7 @@ const Signup = () => {
           <form onSubmit={handleSignup}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">{t('user.fullName')}</Label>
+                <Label htmlFor="name">{t('user.fullName')}*</Label>
                 <Input
                   id="name"
                   value={name}
@@ -146,7 +150,7 @@ const Signup = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="email">{t('user.email')}</Label>
+                <Label htmlFor="email">{t('user.email')}*</Label>
                 <Input
                   id="email"
                   type="email"
@@ -158,7 +162,7 @@ const Signup = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="address">{t('user.address')}</Label>
+                <Label htmlFor="address">{t('user.address')}*</Label>
                 <Input
                   id="address"
                   value={address}
@@ -169,7 +173,18 @@ const Signup = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="dob">{t('user.dateOfBirth')}</Label>
+                <Label htmlFor="mobile">{t('user.mobile')} (Optional)</Label>
+                <Input
+                  id="mobile"
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  placeholder="+1 (123) 456-7890"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="dob">{t('user.dateOfBirth')}*</Label>
                 <Input
                   id="dob"
                   type="date"
@@ -180,15 +195,29 @@ const Signup = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">{t('user.password')}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
+                <Label htmlFor="password">{t('user.password')}*</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
                 
                 {/* Password requirements */}
                 <div className="text-sm space-y-1 mt-2">
@@ -215,15 +244,29 @@ const Signup = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">{t('user.confirmPassword')}</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
+                <Label htmlFor="confirm-password">{t('user.confirmPassword')}*</Label>
+                <div className="relative">
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </CardContent>
             
