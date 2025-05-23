@@ -14,6 +14,7 @@ export type Database = {
           book_id: string
           created_at: string | null
           id: string
+          is_top_review: boolean | null
           is_visible: boolean | null
           rating: number
           review_text: string | null
@@ -24,6 +25,7 @@ export type Database = {
           book_id: string
           created_at?: string | null
           id?: string
+          is_top_review?: boolean | null
           is_visible?: boolean | null
           rating: number
           review_text?: string | null
@@ -34,6 +36,7 @@ export type Database = {
           book_id?: string
           created_at?: string | null
           id?: string
+          is_top_review?: boolean | null
           is_visible?: boolean | null
           rating?: number
           review_text?: string | null

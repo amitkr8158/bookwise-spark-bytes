@@ -74,7 +74,7 @@ const AdminTabs: React.FC = () => {
       <TabsContent value="notifications" className="space-y-4">
         <NotificationManager 
           settings={notificationSettings}
-          onSettingsChange={(settings) => updateNotificationSettings(settings)}
+          onSettingsChange={updateNotificationSettings}
           onTestNotification={showTestNotification}
         />
       </TabsContent>
@@ -85,7 +85,7 @@ const AdminTabs: React.FC = () => {
           quotes={quotes}
           onSettingsChange={updateSubscriptionSettings}
           onAddQuote={addQuote}
-          onEditQuote={(quote: Quote) => updateQuote(quote.id, quote)}
+          onEditQuote={updateQuote}
           onDeleteQuote={deleteQuote}
         />
       </TabsContent>

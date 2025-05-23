@@ -11,7 +11,7 @@ export interface Review {
   created_at: string;
   updated_at: string;
   is_visible: boolean;
-  is_top_review?: boolean;
+  is_top_review: boolean;
   user_name?: string;
   // Add these fields for compatibility with ReviewCard component
   userId?: string;
@@ -48,7 +48,7 @@ export const getBookReviews = async (bookId: string): Promise<Review[]> => {
         bookId: review.book_id,
         userName: fullName,
         content: review.review_text,
-        createdAt: review.created_at,
+        createdAt: new Date(review.created_at),
         isVisible: review.is_visible,
         isTopReview: review.is_top_review || false
       };
@@ -102,7 +102,7 @@ export const addReview = async (
       bookId: data.book_id,
       userName: 'You',
       content: data.review_text,
-      createdAt: data.created_at,
+      createdAt: new Date(data.created_at),
       isVisible: data.is_visible || true,
       isTopReview: data.is_top_review || false
     };
@@ -178,7 +178,7 @@ export const getAllReviews = async (): Promise<Review[]> => {
         bookId: review.book_id,
         userName: fullName,
         content: review.review_text,
-        createdAt: review.created_at,
+        createdAt: new Date(review.created_at),
         isVisible: review.is_visible || true,
         isTopReview: review.is_top_review || false
       };
@@ -217,9 +217,6 @@ export const updateTopReview = async (
   isTopReview: boolean
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    // First create a column if it doesn't exist
-    // This will be handled by the SQL migration
-    
     const { error } = await supabase
       .from('book_reviews')
       .update({

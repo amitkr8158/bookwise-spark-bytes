@@ -96,7 +96,7 @@ export const useReviews = () => {
       if (success) {
         setReviews(prev => 
           prev.map(review => 
-            review.id === reviewId ? { ...review, isTopReview } : review
+            review.id === reviewId ? { ...review, isTopReview, is_top_review: isTopReview } : review
           )
         );
         return { success: true };
