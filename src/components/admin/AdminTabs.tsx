@@ -55,6 +55,12 @@ const AdminTabs: React.FC = () => {
     isTopReview: review.is_top_review || false
   }));
 
+  // Create an adapter function to transform the Quote into id and partial quote
+  const handleEditQuote = (quote: Quote) => {
+    const { id, ...quoteData } = quote;
+    updateQuote(id, quoteData);
+  };
+
   return (
     <Tabs defaultValue="reviews" className="w-full">
       <TabsList className="grid grid-cols-3 w-full mb-8">
@@ -85,7 +91,7 @@ const AdminTabs: React.FC = () => {
           quotes={quotes}
           onSettingsChange={updateSubscriptionSettings}
           onAddQuote={addQuote}
-          onEditQuote={updateQuote}
+          onEditQuote={handleEditQuote}
           onDeleteQuote={deleteQuote}
         />
       </TabsContent>
