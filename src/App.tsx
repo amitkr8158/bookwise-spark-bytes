@@ -34,7 +34,7 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   // Sales notification setup
-  const { currentNotification } = useSalesNotifications();
+  const { currentNotification, showTestNotification } = useSalesNotifications();
   const { settings } = useNotificationSettings();
   
   return (

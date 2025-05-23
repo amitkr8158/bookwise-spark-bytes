@@ -112,45 +112,46 @@ export const onAuthStateChange = (callback: (event: string, session: Session | n
 // Create user accounts
 export const createDefaultUsers = async (): Promise<{success: boolean, message: string}> => {
   try {
-    // Create user account
-    const { error: userError } = await supabase.auth.admin.createUser({
-      email: 'user@example.com',
-      password: 'user123',
-      email_confirm: true,
-      user_metadata: {
-        full_name: 'Regular User'
-      }
-    });
+    // // Create user account - commented out because it's causing a type error
+    // // This function likely requires admin rights in Supabase, which is not available from client
+    // const { error: userError } = await supabase.auth.admin.createUser({
+    //   email: 'user@example.com',
+    //   password: 'user123',
+    //   email_confirm: true,
+    //   user_metadata: {
+    //     full_name: 'Regular User'
+    //   }
+    // });
     
-    if (userError) throw userError;
+    // if (userError) throw userError;
     
-    // Create admin account
-    const { error: adminError } = await supabase.auth.admin.createUser({
-      email: 'admin@example.com',
-      password: 'admin123',
-      email_confirm: true,
-      user_metadata: {
-        full_name: 'Admin User'
-      }
-    });
+    // // Create admin account
+    // const { error: adminError } = await supabase.auth.admin.createUser({
+    //   email: 'admin@example.com',
+    //   password: 'admin123',
+    //   email_confirm: true,
+    //   user_metadata: {
+    //     full_name: 'Admin User'
+    //   }
+    // });
     
-    if (adminError) throw adminError;
+    // if (adminError) throw adminError;
     
-    // Set admin role for admin user
-    const { data: adminUser } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', 'admin@example.com')
-      .single();
+    // // Set admin role for admin user
+    // const { data: adminUser } = await supabase
+    //   .from('profiles')
+    //   .select('id')
+    //   .eq('email', 'admin@example.com')
+    //   .single();
     
-    if (adminUser) {
-      await supabase
-        .from('profiles')
-        .update({ role: 'admin' })
-        .eq('id', adminUser.id);
-    }
+    // if (adminUser) {
+    //   await supabase
+    //     .from('profiles')
+    //     .update({ role: 'admin' })
+    //     .eq('id', adminUser.id);
+    // }
     
-    return { success: true, message: 'Default users created successfully' };
+    return { success: false, message: 'Default users cannot be created from the client. This requires server-side admin API access.' };
   } catch (error: any) {
     return { success: false, message: error.message };
   }

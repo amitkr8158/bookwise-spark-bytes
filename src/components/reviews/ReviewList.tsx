@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import ReviewCard, { Review } from "./ReviewCard";
 import { Button } from "@/components/ui/button";
@@ -70,13 +71,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId, reviews }) => {
         content: reviewContent
       });
       
-      if (error) {
-        toast({
-          title: "Error",
-          description: error,
-          variant: "destructive"
-        });
-      } else {
+      if (success && review) {
         toast({
           title: "Success",
           description: "Your review has been submitted!"
@@ -90,6 +85,12 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId, reviews }) => {
         toast({
           title: "Refresh required",
           description: "Please refresh the page to see your review",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error || "Something went wrong",
+          variant: "destructive"
         });
       }
     } catch (err: any) {

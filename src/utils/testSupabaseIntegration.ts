@@ -46,8 +46,9 @@ export const getTablesInfo = async (): Promise<{
     // Get row counts for each table
     const counts: Record<string, number> = {};
     for (const table of tables) {
+      // Use type assertion to allow the dynamic table name
       const { data: countData, error: countError } = await supabase
-        .from(table)
+        .from(table as any)
         .select('count');
       
       if (countError) {

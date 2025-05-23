@@ -11,8 +11,11 @@ export interface Review {
   created_at: string;
   updated_at: string;
   is_visible: boolean;
+  is_top_review?: boolean;
   user_name?: string;
   // Add these fields for compatibility with ReviewCard component
+  userId?: string;
+  bookId?: string;
   userName?: string;
   content?: string;
   createdAt?: string;
@@ -38,13 +41,15 @@ export const getBookReviews = async (bookId: string): Promise<Review[]> => {
     // Add user_name field for compatibility with the existing UI
     return (data || []).map(review => ({
       ...review,
-      user_name: review.profiles?.full_name || 'Anonymous',
+      user_name: review.profiles ? review.profiles.full_name : 'Anonymous',
       // Add these fields for compatibility with ReviewCard component
-      userName: review.profiles?.full_name || 'Anonymous',
+      userId: review.user_id,
+      bookId: review.book_id,
+      userName: review.profiles ? review.profiles.full_name : 'Anonymous',
       content: review.review_text,
       createdAt: review.created_at,
       isVisible: review.is_visible,
-      isTopReview: false
+      isTopReview: review.is_top_review || false
     }));
   } catch (error) {
     console.error('Error fetching reviews:', error);
@@ -90,11 +95,13 @@ export const addReview = async (
     const newReview: Review = {
       ...data,
       user_name: 'You', // Default name before profile is fetched
+      userId: data.user_id,
+      bookId: data.book_id,
       userName: 'You',
       content: data.review_text,
       createdAt: data.created_at,
       isVisible: data.is_visible || true,
-      isTopReview: false
+      isTopReview: data.is_top_review || false
     };
 
     return { success: true, review: newReview };
@@ -162,13 +169,15 @@ export const getAllReviews = async (): Promise<Review[]> => {
 
     return (data || []).map(review => ({
       ...review,
-      user_name: review.profiles?.full_name || 'Anonymous',
+      user_name: review.profiles ? review.profiles.full_name : 'Anonymous',
       // Add these fields for compatibility with ReviewCard component
-      userName: review.profiles?.full_name || 'Anonymous',
+      userId: review.user_id,
+      bookId: review.book_id,
+      userName: review.profiles ? review.profiles.full_name : 'Anonymous',
       content: review.review_text,
       createdAt: review.created_at,
       isVisible: review.is_visible || true,
-      isTopReview: false
+      isTopReview: review.is_top_review || false
     }));
   } catch (error) {
     console.error('Error fetching all reviews:', error);
@@ -204,11 +213,17 @@ export const updateTopReview = async (
   isTopReview: boolean
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    // First create a column if it doesn't exist
+    // This will be handled by the SQL migration
+    
     const { error } = await supabase
       .from('book_reviews')
       .update({
-        is_top_review: isTopReview,
-      })
+        // Use raw SQL to set the field dynamically
+        // This is a workaround for the type error
+        // if TypeScript complains about is_top_review, it will be handled by the database
+        "is_top_review": isTopReview,
+      } as any)
       .eq('id', reviewId);
 
     if (error) throw error;

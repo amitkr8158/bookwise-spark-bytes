@@ -9,12 +9,14 @@ import {
   useNotificationSettings, 
   useSubscriptionSettings,
   useQuotes,
-  useSalesNotifications
+  useSalesNotifications,
+  Quote
 } from "@/services/configService";
+import { Review } from "@/components/reviews/ReviewCard";
 
 const AdminTabs: React.FC = () => {
   const { 
-    reviews, 
+    reviews: serviceReviews, 
     toggleReviewVisibility, 
     toggleTopReview 
   } = useReviews();
@@ -37,6 +39,20 @@ const AdminTabs: React.FC = () => {
   } = useQuotes();
   
   const { showTestNotification } = useSalesNotifications();
+
+  // Convert service reviews to the format expected by ReviewManager
+  const reviews: Review[] = serviceReviews.map(review => ({
+    id: review.id,
+    userId: review.user_id,
+    bookId: review.book_id,
+    userName: review.user_name || 'Anonymous',
+    userAvatar: undefined,
+    rating: review.rating,
+    content: review.review_text,
+    createdAt: new Date(review.created_at),
+    isVisible: review.is_visible || false,
+    isTopReview: review.is_top_review || false
+  }));
 
   return (
     <Tabs defaultValue="reviews" className="w-full">
@@ -68,7 +84,7 @@ const AdminTabs: React.FC = () => {
           quotes={quotes}
           onSettingsChange={updateSubscriptionSettings}
           onAddQuote={addQuote}
-          onEditQuote={updateQuote}
+          onEditQuote={(updatedQuote: Quote) => updateQuote(updatedQuote.id, updatedQuote)}
           onDeleteQuote={deleteQuote}
         />
       </TabsContent>

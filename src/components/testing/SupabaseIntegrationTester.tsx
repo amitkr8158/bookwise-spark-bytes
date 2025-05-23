@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +63,14 @@ const SupabaseIntegrationTester = () => {
       const results = await testAuthFlow(email, password);
       setAuthResults(results);
       
-      const allSuccessful = Object.values(results).every(result => result.success);
+      // Type guard to check if results has success property
+      const isValidResult = (result: any): result is { success: boolean } => 
+        result && typeof result.success === 'boolean';
+      
+      const allSuccessful = Object.values(results).every(result => 
+        isValidResult(result) && result.success
+      );
+      
       toast({
         title: allSuccessful ? "Auth tests passed" : "Some auth tests failed",
         description: allSuccessful 

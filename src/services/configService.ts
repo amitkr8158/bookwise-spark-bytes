@@ -15,6 +15,34 @@ export * from './books/bookService';
 import React, { useState, useEffect } from 'react';
 import { getAllReviews, updateReviewVisibility, updateTopReview, Review } from './reviews/reviewService';
 
+// Define types for settings
+export interface NotificationSettings {
+  showSalesNotifications: boolean;
+  notifyNewReleases: boolean;
+  notifyDiscounts: boolean;
+  salesNotificationsEnabled: boolean;
+  frequency: string;
+  realSales: boolean;
+  displayDuration: number;
+  position: string;
+}
+
+export interface SubscriptionSettings {
+  dailyEmailEnabled: boolean;
+  weeklyDigestEnabled: boolean;
+  monthlyNewsletterEnabled: boolean;
+  isEnabled: boolean;
+  sendTime: string;
+  emailSubject: string;
+  emailTemplate: string;
+}
+
+export interface Quote {
+  id: string;
+  text: string;
+  author: string;
+}
+
 // Custom hook for reviews management in admin panel
 export const useReviews = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -92,13 +120,18 @@ export const useReviews = () => {
 
 // Add hooks for other services that might be needed
 export const useNotificationSettings = () => {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<NotificationSettings>({
     showSalesNotifications: true,
     notifyNewReleases: true,
-    notifyDiscounts: true
+    notifyDiscounts: true,
+    salesNotificationsEnabled: true,
+    frequency: 'daily',
+    realSales: true,
+    displayDuration: 5,
+    position: 'bottom-right'
   });
   
-  const updateSettings = (newSettings: any) => {
+  const updateSettings = (newSettings: Partial<NotificationSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
   
@@ -109,13 +142,17 @@ export const useNotificationSettings = () => {
 };
 
 export const useSubscriptionSettings = () => {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<SubscriptionSettings>({
     dailyEmailEnabled: true,
     weeklyDigestEnabled: true,
-    monthlyNewsletterEnabled: false
+    monthlyNewsletterEnabled: false,
+    isEnabled: true,
+    sendTime: '08:00',
+    emailSubject: 'Your Daily BookBites Update',
+    emailTemplate: 'default'
   });
   
-  const updateSettings = (newSettings: any) => {
+  const updateSettings = (newSettings: Partial<SubscriptionSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
   
@@ -126,16 +163,16 @@ export const useSubscriptionSettings = () => {
 };
 
 export const useQuotes = () => {
-  const [quotes, setQuotes] = useState([
+  const [quotes, setQuotes] = useState<Quote[]>([
     { id: '1', text: 'The only limit to our realization of tomorrow will be our doubts of today.', author: 'Franklin D. Roosevelt' },
     { id: '2', text: 'The way to get started is to quit talking and begin doing.', author: 'Walt Disney' },
   ]);
   
-  const addQuote = (quote: any) => {
+  const addQuote = (quote: Quote) => {
     setQuotes(prev => [...prev, { ...quote, id: Date.now().toString() }]);
   };
   
-  const updateQuote = (id: string, quote: any) => {
+  const updateQuote = (id: string, quote: Partial<Quote>) => {
     setQuotes(prev => prev.map(q => q.id === id ? { ...q, ...quote } : q));
   };
   
@@ -152,11 +189,23 @@ export const useQuotes = () => {
 };
 
 export const useSalesNotifications = () => {
+  const [currentNotification, setCurrentNotification] = useState<any>(null);
+  
   const showTestNotification = () => {
-    console.log('Test notification shown');
+    setCurrentNotification({
+      title: "Flash Sale!",
+      message: "Get 30% off on selected books for the next 24 hours!",
+      link: "/browse?sale=true"
+    });
+    
+    // Clear notification after 5 seconds
+    setTimeout(() => {
+      setCurrentNotification(null);
+    }, 5000);
   };
   
   return {
+    currentNotification,
     showTestNotification
   };
 };

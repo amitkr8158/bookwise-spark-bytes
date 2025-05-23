@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { getReviewsByBookId } from "@/services/reviews/reviewService";
 import ReviewList from "@/components/reviews/ReviewList";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Review } from "@/components/reviews/ReviewCard";
+import { Review } from "@/services/reviews/reviewService";
 
 interface BookReviewsProps {
   bookId: string;
@@ -23,7 +23,18 @@ const BookReviews: React.FC<BookReviewsProps> = ({ bookId }) => {
         if (result.error) {
           setError(result.error);
         } else {
-          setReviews(result.reviews);
+          // Cast the reviews to ensure they have the right properties
+          const reviewsWithCorrectProps = result.reviews.map(review => ({
+            ...review,
+            userId: review.user_id,
+            bookId: review.book_id,
+            userName: review.user_name || 'Anonymous',
+            content: review.review_text,
+            createdAt: new Date(review.created_at),
+            isVisible: review.is_visible,
+            isTopReview: review.is_top_review || false
+          }));
+          setReviews(reviewsWithCorrectProps);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error occurred');
