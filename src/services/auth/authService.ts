@@ -93,7 +93,8 @@ export const getUserProfile = async (userId: string): Promise<{ data: UserProfil
     return { data, error: null };
   } catch (error) {
     console.error("Error getting user profile:", error);
-    return { data: null, error: error as Error };
+    // Ensure we return the correct type structure here
+    return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
   }
 };
 
