@@ -1,163 +1,201 @@
 
-import React, { useState } from 'react';
-import { testSupabaseIntegration, testAuthFlow } from '@/utils/testSupabaseIntegration';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, XCircle, Database, Key, Server } from 'lucide-react';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { testSupabaseIntegration, testAuthFlow } from "@/utils/testSupabaseIntegration";
+import { toast } from "@/components/ui/use-toast";
 
 const SupabaseIntegrationTester = () => {
-  const [email, setEmail] = useState('test@example.com');
-  const [password, setPassword] = useState('password123');
-  const [results, setResults] = useState<any>(null);
-  const [testing, setTesting] = useState(false);
-  const [testType, setTestType] = useState<'connection' | 'auth' | 'tables'>('connection');
+  const [isLoading, setIsLoading] = useState(false);
+  const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string }> | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authResults, setAuthResults] = useState<Record<string, { success: boolean; message: string }> | null>(null);
 
-  const runTest = async () => {
-    setTesting(true);
-    setResults(null);
-    
+  const runTests = async () => {
+    setIsLoading(true);
     try {
-      let testResults;
+      const results = await testSupabaseIntegration();
+      setTestResults(results);
       
-      if (testType === 'connection') {
-        testResults = await testSupabaseIntegration();
-      } else if (testType === 'auth') {
-        testResults = await testAuthFlow(email, password);
-      } else {
-        // This would be the tables test, which we could implement later
-        const { data, error } = await fetch('/api/tables').then(res => res.json());
-        testResults = { tables: { success: !error, message: error || 'Retrieved tables' } };
-      }
-      
-      setResults(testResults);
-    } catch (error: any) {
-      console.error('Test error:', error);
-      setResults({ error: error.message });
+      const allSuccessful = Object.values(results).every(result => result.success);
+      toast({
+        title: allSuccessful ? "All tests passed" : "Some tests failed",
+        description: allSuccessful 
+          ? "Supabase integration is working correctly" 
+          : "Please check the test results for details",
+        variant: allSuccessful ? "default" : "destructive",
+      });
+    } catch (error) {
+      console.error("Test error:", error);
+      toast({
+        title: "Test Error",
+        description: "There was an error running the tests. See console for details.",
+        variant: "destructive",
+      });
     } finally {
-      setTesting(false);
+      setIsLoading(false);
     }
   };
-  
-  const getOverallStatus = () => {
-    if (!results || results.error) return false;
-    
-    return Object.values(results).every((result: any) => result.success);
+
+  const runAuthTests = async () => {
+    if (!email || !password) {
+      toast({
+        title: "Missing credentials",
+        description: "Please provide both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      const results = await testAuthFlow(email, password);
+      setAuthResults(results);
+      
+      const allSuccessful = Object.values(results).every(result => result.success);
+      toast({
+        title: allSuccessful ? "Auth tests passed" : "Some auth tests failed",
+        description: allSuccessful 
+          ? "Authentication flow is working correctly" 
+          : "Please check the auth test results for details",
+        variant: allSuccessful ? "default" : "destructive",
+      });
+    } catch (error) {
+      console.error("Auth test error:", error);
+      toast({
+        title: "Auth Test Error",
+        description: "There was an error running the auth tests. See console for details.",
+        variant: "destructive",
+      });
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <div className="flex justify-between items-center">
+    <div className="container mx-auto p-4 max-w-3xl">
+      <Card className="mb-8">
+        <CardHeader>
           <CardTitle>Supabase Integration Tester</CardTitle>
-          {results && (
-            <Badge variant={getOverallStatus() ? "success" : "destructive"}>
-              {getOverallStatus() ? 'All Tests Passed' : 'Tests Failed'}
-            </Badge>
-          )}
-        </div>
-        <CardDescription>
-          Test your Supabase connection and authentication flow
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <Tabs value={testType} onValueChange={(v: any) => setTestType(v)}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="connection" className="flex items-center">
-                <Server className="mr-2 h-4 w-4" />
-                Connection
-              </TabsTrigger>
-              <TabsTrigger value="auth" className="flex items-center">
-                <Key className="mr-2 h-4 w-4" />
-                Auth Flow
-              </TabsTrigger>
-              <TabsTrigger value="tables" className="flex items-center">
-                <Database className="mr-2 h-4 w-4" />
-                Tables
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="connection" className="mt-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Tests basic connection to Supabase and retrieves session information.
-              </p>
-            </TabsContent>
-            
-            <TabsContent value="auth" className="mt-4">
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Tests user signup, login, and profile retrieval.
-                </p>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="tables" className="mt-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Checks available tables in the Supabase database.
-              </p>
-            </TabsContent>
-          </Tabs>
+          <CardDescription>
+            Test the integration between your app and Supabase
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            onClick={runTests}
+            disabled={isLoading}
+            className="w-full mb-4"
+          >
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? "Running Tests..." : "Test Supabase Connection"}
+          </Button>
 
-          {results && (
-            <div className="space-y-4 mt-6">
-              <h3 className="font-medium">Test Results:</h3>
-              
-              {results.error ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{results.error}</AlertDescription>
+          {testResults && (
+            <div className="space-y-3 mt-4">
+              <h3 className="text-lg font-medium">Test Results</h3>
+              {Object.entries(testResults).map(([key, result]) => (
+                <Alert key={key} variant={result.success ? "default" : "destructive"}>
+                  <div className="flex items-center">
+                    {result.success ? (
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                    )}
+                    <AlertTitle className="capitalize">{key} Test</AlertTitle>
+                  </div>
+                  <AlertDescription className="ml-6">
+                    {result.message}
+                  </AlertDescription>
                 </Alert>
-              ) : (
-                <div className="space-y-2">
-                  {Object.entries(results).map(([key, value]: [string, any]) => (
-                    <div 
-                      key={key}
-                      className="p-2 rounded-md border flex justify-between items-center"
-                    >
-                      <div>
-                        <span className="font-medium capitalize">{key}</span>
-                        <p className="text-sm text-muted-foreground">{value.message}</p>
-                      </div>
-                      {value.success ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-500" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
           )}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={runTest} disabled={testing} className="w-full">
-          {testing ? 'Testing...' : 'Run Test'}
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Authentication Flow Test</CardTitle>
+          <CardDescription>
+            Test sign up and login with Supabase Auth
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="test@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="min 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Button 
+              onClick={runAuthTests}
+              disabled={authLoading || !email || !password}
+              className="w-full"
+            >
+              {authLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {authLoading ? "Testing Auth..." : "Test Authentication Flow"}
+            </Button>
+          </div>
+
+          {authResults && (
+            <div className="space-y-3 mt-4">
+              <h3 className="text-lg font-medium">Auth Test Results</h3>
+              {Object.entries(authResults).map(([key, result]) => (
+                <Alert key={key} variant={result.success ? "default" : "destructive"}>
+                  <div className="flex items-center">
+                    {result.success ? (
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                    )}
+                    <AlertTitle className="capitalize">{key}</AlertTitle>
+                  </div>
+                  <AlertDescription className="ml-6">
+                    {result.message}
+                  </AlertDescription>
+                </Alert>
+              ))}
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="flex-col items-start space-y-2">
+          <div className="bg-muted p-2 rounded text-sm w-full">
+            <strong>Note:</strong> When testing, use a real email. The test will attempt to:
+            <ol className="list-decimal ml-5 mt-1">
+              <li>Create a new user with the provided email/password</li>
+              <li>Sign in with those credentials</li>
+              <li>Fetch the user profile if successful</li>
+            </ol>
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 

@@ -49,6 +49,18 @@ export const signOut = async (): Promise<{ error: Error | null }> => {
   return await supabase.auth.signOut();
 };
 
+// Reset password
+export const resetPassword = async (email: string): Promise<{ data: any, error: Error | null }> => {
+  return await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+};
+
+// Update password
+export const updatePassword = async (newPassword: string): Promise<{ data: any, error: Error | null }> => {
+  return await supabase.auth.updateUser({ password: newPassword });
+};
+
 // Get the current session
 export const getSession = async (): Promise<{ data: { session: Session | null } }> => {
   return await supabase.auth.getSession();

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,20 @@ import UserDropdownMenu from "./UserDropdownMenu";
 const HeaderDesktopActions = () => {
   const { t } = useTranslation();
   const { language, setLanguage, theme, setTheme, isDarkMode, isAuthenticated, user } = useGlobalContext();
+  const navigate = useNavigate();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
   const toggleTheme = () => setTheme(isDarkMode ? 'light' : 'dark');
   const toggleLanguage = () => setLanguage(language === 'en' ? 'hi' : 'en');
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleSignupClick = () => {
+    navigate('/signup');
+  };
 
   return (
     <div className="hidden md:flex items-center gap-4">
@@ -68,16 +77,12 @@ const HeaderDesktopActions = () => {
         <UserDropdownMenu user={user} />
       ) : (
         <div className="flex items-center gap-3">
-          <Link to="/login">
-            <Button variant="ghost" size="sm">
-              {t('user.login')}
-            </Button>
-          </Link>
-          <Link to="/signup">
-            <Button variant="default" size="sm">
-              {t('user.signup')}
-            </Button>
-          </Link>
+          <Button variant="ghost" size="sm" onClick={handleLoginClick}>
+            {t('user.login')}
+          </Button>
+          <Button variant="default" size="sm" onClick={handleSignupClick}>
+            {t('user.signup')}
+          </Button>
         </div>
       )}
     </div>
