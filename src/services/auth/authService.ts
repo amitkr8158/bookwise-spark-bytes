@@ -21,7 +21,8 @@ export interface UserProfile {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
-  role: string; // Changed from 'user' | 'admin' to string to match Supabase
+  role: string;
+  email?: string;
 }
 
 // Sign up a new user
@@ -61,7 +62,13 @@ export const resetPassword = async (email: string): Promise<{ data: any, error: 
 
 // Update password
 export const updatePassword = async (newPassword: string): Promise<{ data: any, error: Error | null }> => {
-  return await supabase.auth.updateUser({ password: newPassword });
+  try {
+    const result = await supabase.auth.updateUser({ password: newPassword });
+    return result;
+  } catch (error) {
+    console.error("Error updating password:", error);
+    return { data: null, error: error as Error };
+  }
 };
 
 // Get the current session
@@ -71,13 +78,18 @@ export const getSession = async (): Promise<{ data: { session: Session | null } 
 
 // Get the current user profile
 export const getUserProfile = async (userId: string): Promise<{ data: UserProfile | null, error: Error | null }> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, avatar_url, role')
-    .eq('id', userId)
-    .single();
-  
-  return { data, error };
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, role, email')
+      .eq('id', userId)
+      .single();
+    
+    return { data, error };
+  } catch (error) {
+    console.error("Error getting user profile:", error);
+    return { data: null, error: error as Error };
+  }
 };
 
 // Update user profile
@@ -92,17 +104,22 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
 
 // Check if user is admin
 export const isAdmin = async (userId: string): Promise<boolean> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .single();
-  
-  if (error || !data) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    
+    if (error || !data) {
+      return false;
+    }
+    
+    return data.role === 'admin';
+  } catch (error) {
+    console.error("Error checking admin status:", error);
     return false;
   }
-  
-  return data.role === 'admin';
 };
 
 // Listen to auth changes

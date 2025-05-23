@@ -15,6 +15,23 @@ const Header = () => {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+  // Helper function to safely fetch user profile
+  const fetchUserProfile = (userId: string) => {
+    getUserProfile(userId).then(({ data }) => {
+      if (data) {
+        setUser({
+          id: userId,
+          name: data.full_name || '',
+          email: data.email || '',
+          role: data.role || 'user',
+          avatar: data.avatar_url || undefined,
+        });
+      }
+    }).catch(err => {
+      console.error("Error fetching user profile:", err);
+    });
+  };
+
   // Check and set auth state on page load
   useEffect(() => {
     // Get initial session
@@ -24,17 +41,7 @@ const Header = () => {
       if (session?.user) {
         // Use setTimeout to avoid Supabase auth deadlock
         setTimeout(() => {
-          getUserProfile(session.user.id).then(({ data }) => {
-            if (data) {
-              setUser({
-                id: session.user.id,
-                name: data.full_name || session.user.email?.split('@')[0] || '',
-                email: session.user.email || '',
-                role: data.role || 'user',
-                avatar: data.avatar_url || undefined,
-              });
-            }
-          });
+          fetchUserProfile(session.user.id);
         }, 0);
       }
     });
@@ -48,17 +55,7 @@ const Header = () => {
         if (session?.user) {
           // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(() => {
-            getUserProfile(session.user.id).then(({ data }) => {
-              if (data) {
-                setUser({
-                  id: session.user.id,
-                  name: data.full_name || session.user.email?.split('@')[0] || '',
-                  email: session.user.email || '',
-                  role: data.role || 'user',
-                  avatar: data.avatar_url || undefined,
-                });
-              }
-            });
+            fetchUserProfile(session.user.id);
           }, 0);
         } else {
           setUser(null);
