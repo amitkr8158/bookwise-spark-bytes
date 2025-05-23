@@ -4,8 +4,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 type Language = 'en' | 'hi';
 type Theme = 'light' | 'dark' | 'system';
 
-// User roles
-type UserRole = 'user' | 'admin';
+// User roles - changed to string to match Supabase
+export type UserRole = string;
 
 // User profile interface - Now properly exported
 export interface UserProfile {
