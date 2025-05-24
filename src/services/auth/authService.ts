@@ -132,15 +132,18 @@ export const onAuthStateChange = (callback: (event: string, session: Session | n
   return supabase.auth.onAuthStateChange(callback);
 };
 
-// Create test user accounts with proper error handling
+// Create test user accounts with stronger passwords
 export const createTestUsers = async (): Promise<{success: boolean, message: string}> => {
   try {
     console.log("Creating test users...");
     
+    // Use stronger passwords that meet Supabase requirements
+    const strongPassword = 'TestPass123!';
+    
     // Create customer account
     const { data: customerData, error: createCustomerError } = await signUp({
       email: 'customer@example.com',
-      password: 'password123',
+      password: strongPassword,
       name: 'Test Customer'
     });
     
@@ -148,12 +151,23 @@ export const createTestUsers = async (): Promise<{success: boolean, message: str
       console.error("Error creating customer:", createCustomerError);
     } else {
       console.log("Customer account ready");
+      
+      // Create profile for customer if user was created
+      if (customerData?.user?.id) {
+        await supabase
+          .from('profiles')
+          .upsert({ 
+            id: customerData.user.id, 
+            full_name: 'Test Customer',
+            role: 'user' 
+          });
+      }
     }
     
     // Create admin account  
     const { data: adminData, error: createAdminError } = await signUp({
       email: 'admin@example.com',
-      password: 'password123',
+      password: strongPassword,
       name: 'Test Admin'
     });
     
@@ -161,22 +175,22 @@ export const createTestUsers = async (): Promise<{success: boolean, message: str
       console.error("Error creating admin:", createAdminError);
     } else {
       console.log("Admin account ready");
-    }
-    
-    // If both users were created or already exist, try to update admin role
-    if (adminData?.user?.id) {
-      await supabase
-        .from('profiles')
-        .upsert({ 
-          id: adminData.user.id, 
-          full_name: 'Test Admin',
-          role: 'admin' 
-        });
+      
+      // Create profile for admin if user was created
+      if (adminData?.user?.id) {
+        await supabase
+          .from('profiles')
+          .upsert({ 
+            id: adminData.user.id, 
+            full_name: 'Test Admin',
+            role: 'admin' 
+          });
+      }
     }
     
     return { 
       success: true, 
-      message: 'Demo accounts created! Customer: customer@example.com / password123, Admin: admin@example.com / password123' 
+      message: 'Demo accounts ready! Customer: customer@example.com / TestPass123!, Admin: admin@example.com / TestPass123!' 
     };
   } catch (error: any) {
     console.error("Error in createTestUsers:", error);

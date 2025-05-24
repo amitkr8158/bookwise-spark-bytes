@@ -130,7 +130,7 @@ const Login = () => {
       
       // Special handling for test users
       if ((data.email === "customer@example.com" || data.email === "admin@example.com") && 
-          data.password === "password123") {
+          (data.password === "password123" || data.password === "TestPass123!")) {
         toast({
           title: "Creating test accounts",
           description: "Setting up the test accounts for you...",
@@ -141,9 +141,10 @@ const Login = () => {
         if (success) {
           toast({
             title: "Test Accounts Ready",
-            description: "Please try logging in again with the same credentials.",
+            description: "Please try logging in again with the password: TestPass123!",
           });
-          form.reset();
+          // Update the form with the correct password
+          form.setValue('password', 'TestPass123!');
         } else {
           toast({
             title: "Login Failed",
@@ -353,17 +354,20 @@ const Login = () => {
               <div className="flex flex-col gap-2">
                 <Button variant="outline" size="sm" onClick={() => {
                   form.setValue('email', 'customer@example.com');
-                  form.setValue('password', 'password123');
+                  form.setValue('password', 'TestPass123!');
                 }}>
                   Use Customer Account
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => {
                   form.setValue('email', 'admin@example.com');
-                  form.setValue('password', 'password123');
+                  form.setValue('password', 'TestPass123!');
                 }}>
                   Use Admin Account
                 </Button>
               </div>
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                Password: TestPass123!
+              </p>
             </div>
           </div>
         </div>
