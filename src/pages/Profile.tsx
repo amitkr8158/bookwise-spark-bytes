@@ -6,6 +6,7 @@ import { useGlobalContext } from "@/contexts/GlobalContext";
 import { format } from "date-fns";
 import { signOut, getOrCreateUserProfile } from "@/services/auth/authService";
 import { getUserPurchasedBooks } from "@/services/books/bookService";
+import { supabase } from "@/integrations/supabase/client";
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";

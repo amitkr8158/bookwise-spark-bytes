@@ -3,15 +3,20 @@ import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { supabase } from "@/integrations/supabase/client";
-import { getOrCreateUserProfile } from "@/services/auth/authService";
+import { getOrCreateUserProfile, signOut } from "@/services/auth/authService";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import HeaderLogo from "./HeaderLogo";
 import HeaderDesktopNav from "./HeaderDesktopNav";
 import HeaderDesktopActions from "./HeaderDesktopActions";
 import HeaderMobileMenu from "./HeaderMobileMenu";
 
 const Header = () => {
-  const { setIsAuthenticated, setUser } = useGlobalContext();
+  const { setIsAuthenticated, setUser, isAuthenticated, user } = useGlobalContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -40,6 +45,29 @@ const Header = () => {
     }).catch(err => {
       console.error("Error in fetchOrCreateUserProfile:", err);
     });
+  };
+
+  // Handle user logout
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Check and set auth state on page load
@@ -86,6 +114,27 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <HeaderDesktopNav />
+
+        {/* Auth Buttons - Top Priority */}
+        <div className="flex items-center gap-4">
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Welcome, {user.name}</span>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
+                Login
+              </Button>
+              <Button size="sm" onClick={() => navigate('/signup')}>
+                Sign Up
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Desktop Actions */}
         <HeaderDesktopActions />
