@@ -132,68 +132,51 @@ export const onAuthStateChange = (callback: (event: string, session: Session | n
   return supabase.auth.onAuthStateChange(callback);
 };
 
-// Create test user accounts with admin role
+// Create test user accounts with proper error handling
 export const createTestUsers = async (): Promise<{success: boolean, message: string}> => {
   try {
-    console.log("Attempting to create test users...");
+    console.log("Creating test users...");
     
-    // Try to sign in with customer account first
-    const { error: customerSignInError } = await signIn({ 
-      email: 'customer@example.com', 
-      password: 'password123' 
+    // Create customer account
+    const { data: customerData, error: createCustomerError } = await signUp({
+      email: 'customer@example.com',
+      password: 'password123',
+      name: 'Test Customer'
     });
     
-    if (customerSignInError) {
-      console.log("Customer account doesn't exist, creating it...");
-      // If login fails, try to create the account
-      const { data: customerData, error: createCustomerError } = await signUp({
-        email: 'customer@example.com',
-        password: 'password123',
-        name: 'Test Customer',
-        metadata: { role: 'user' }
-      });
-      
-      if (createCustomerError) {
-        console.error("Error creating customer account:", createCustomerError);
-      } else {
-        console.log("Customer account created successfully:", customerData);
-      }
+    if (createCustomerError && !createCustomerError.message.includes('already registered')) {
+      console.error("Error creating customer:", createCustomerError);
     } else {
-      console.log("Customer account already exists and can be used");
+      console.log("Customer account ready");
     }
     
-    await signOut();
-    
-    // Try to sign in with admin account
-    const { error: adminSignInError } = await signIn({ 
-      email: 'admin@example.com', 
-      password: 'password123' 
+    // Create admin account  
+    const { data: adminData, error: createAdminError } = await signUp({
+      email: 'admin@example.com',
+      password: 'password123',
+      name: 'Test Admin'
     });
     
-    if (adminSignInError) {
-      console.log("Admin account doesn't exist, creating it...");
-      // If login fails, try to create the account
-      const { data: adminData, error: createAdminError } = await signUp({
-        email: 'admin@example.com',
-        password: 'password123',
-        name: 'Test Admin',
-        metadata: { role: 'admin' }
-      });
-      
-      if (createAdminError) {
-        console.error("Error creating admin account:", createAdminError);
-      } else {
-        console.log("Admin account created successfully:", adminData);
-      }
+    if (createAdminError && !createAdminError.message.includes('already registered')) {
+      console.error("Error creating admin:", createAdminError);
     } else {
-      console.log("Admin account already exists and can be used");
+      console.log("Admin account ready");
     }
     
-    await signOut();
+    // If both users were created or already exist, try to update admin role
+    if (adminData?.user?.id) {
+      await supabase
+        .from('profiles')
+        .upsert({ 
+          id: adminData.user.id, 
+          full_name: 'Test Admin',
+          role: 'admin' 
+        });
+    }
     
     return { 
       success: true, 
-      message: 'Test accounts are ready to use. Customer: customer@example.com / password123, Admin: admin@example.com / password123' 
+      message: 'Demo accounts created! Customer: customer@example.com / password123, Admin: admin@example.com / password123' 
     };
   } catch (error: any) {
     console.error("Error in createTestUsers:", error);
