@@ -71,6 +71,19 @@ const Profile = () => {
         
         if (profileError) {
           console.error("Error ensuring profile exists:", profileError);
+          
+          // If it's an RLS error, the session should already be cleaned up
+          if (profileError.message?.includes('RLS policy violation') || profileError.message?.includes('Session cleaned up')) {
+            toast({
+              title: "Authentication Error",
+              description: "Profile access denied. Please log in again.",
+              variant: "destructive"
+            });
+            
+            // Navigate to login since session was cleared
+            navigate('/login');
+            return;
+          }
         } else if (profile && !user) {
           // Update global user state if not already set
           setUser({
@@ -92,13 +105,21 @@ const Profile = () => {
         }
       } catch (error) {
         console.error("Error in profile initialization:", error);
+        
+        // On any unexpected error, redirect to login
+        toast({
+          title: "Error",
+          description: "Failed to load profile. Please log in again.",
+          variant: "destructive"
+        });
+        navigate('/login');
       } finally {
         setIsLoading(false);
       }
     };
     
     initializeProfile();
-  }, [isAuthenticated, user, setUser]);
+  }, [isAuthenticated, user, setUser, navigate, toast]);
   
   // Handle user logout
   const handleLogout = async () => {
@@ -124,7 +145,7 @@ const Profile = () => {
   };
   
   // Separate books and bundles
-  const purchasedBundles: any[] = []; // To be implemented with bundles table
+  const purchasedBundles: any[] = [];
   
   // Formats date string
   const formatDate = (dateString: string) => {
@@ -135,10 +156,6 @@ const Profile = () => {
     }
   };
 
-  if (!isAuthenticated || !user) {
-    return null; // Redirecting in useEffect
-  }
-  
   // Get initials for avatar fallback
   const getInitials = (name: string) => {
     return name
@@ -161,6 +178,10 @@ const Profile = () => {
     document.body.removeChild(link);
   };
 
+  if (!isAuthenticated || !user) {
+    return null; // Redirecting in useEffect
+  }
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

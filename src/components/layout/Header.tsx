@@ -25,6 +25,13 @@ const Header = () => {
     getOrCreateUserProfile(userId, userData).then(({ data, error }) => {
       if (error) {
         console.error("Error fetching/creating user profile:", error);
+        
+        // If it's an RLS error, the session should already be cleaned up by the service
+        // Just update the local state to reflect the logout
+        if (error.message?.includes('RLS policy violation') || error.message?.includes('Session cleaned up')) {
+          setIsAuthenticated(false);
+          setUser(null);
+        }
         return;
       }
       
@@ -39,6 +46,10 @@ const Header = () => {
       }
     }).catch(err => {
       console.error("Error in fetchOrCreateUserProfile:", err);
+      
+      // On any error, clear the auth state as a safety measure
+      setIsAuthenticated(false);
+      setUser(null);
     });
   };
 
