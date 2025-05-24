@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ import { getBooks, createBook } from "@/services/books/bookService";
 
 interface TestResult {
   name: string;
-  status: 'pending' | 'success' | 'error' | 'warning';
+  status: 'pending' | 'success' | 'error';
   message: string;
   details?: any;
 }
@@ -117,7 +118,7 @@ const ComprehensiveFlowTester = () => {
     }
   };
 
-  // Test 4: Profile Creation (Updated to handle RLS issues)
+  // Test 4: Profile Creation
   const testProfileCreation = async (userId: string) => {
     setCurrentTestStatus("Profile Creation");
     try {
@@ -126,19 +127,7 @@ const ComprehensiveFlowTester = () => {
         email: testEmail
       });
 
-      if (error) {
-        // If it's an RLS policy violation, treat as warning instead of error
-        if (error.message.includes('row-level security policy')) {
-          addResult({
-            name: "Profile Creation",
-            status: 'warning',
-            message: "Profile creation blocked by RLS policy - this is expected in some configurations",
-            details: error
-          });
-          return null;
-        }
-        throw error;
-      }
+      if (error) throw error;
 
       addResult({
         name: "Profile Creation",
@@ -187,100 +176,50 @@ const ComprehensiveFlowTester = () => {
     }
   };
 
-  // Test 6: Test User Accounts (Updated to handle existing users)
+  // Test 6: Test User Accounts
   const testTestUserAccounts = async () => {
     setCurrentTestStatus("Test User Accounts");
     try {
-      // Try to sign in with existing test accounts first
-      const { data: customerData, error: customerSignInError } = await signIn({
+      // Try to sign in with existing test accounts
+      const { data: customerData, error: customerError } = await signIn({
         email: customerEmail,
         password: testPassword
       });
 
-      let customerSuccess = false;
-      if (!customerSignInError) {
-        customerSuccess = true;
+      if (customerError) {
+        addResult({
+          name: "Customer Account Login",
+          status: 'error',
+          message: `Customer account login failed: ${customerError.message}`
+        });
+      } else {
         addResult({
           name: "Customer Account Login",
           status: 'success',
-          message: "Existing customer account login successful"
+          message: "Customer account login successful"
         });
-      } else {
-        // If login fails, try to create the account
-        const { data: newCustomerData, error: customerSignUpError } = await signUp({
-          email: customerEmail,
-          password: testPassword,
-          name: "Test Customer"
-        });
-
-        if (customerSignUpError && !customerSignUpError.message.includes('already registered')) {
-          addResult({
-            name: "Customer Account Creation",
-            status: 'warning',
-            message: `Customer account creation issue: ${customerSignUpError.message}`
-          });
-        } else {
-          customerSuccess = true;
-          addResult({
-            name: "Customer Account",
-            status: 'success',
-            message: "Customer account ready (created or already exists)"
-          });
-        }
       }
 
       // Sign out before testing admin
       await signOut();
 
-      // Try admin account
-      const { data: adminData, error: adminSignInError } = await signIn({
+      // Test admin account
+      const { data: adminData, error: adminError } = await signIn({
         email: adminEmail,
         password: testPassword
       });
 
-      let adminSuccess = false;
-      if (!adminSignInError) {
-        adminSuccess = true;
+      if (adminError) {
+        addResult({
+          name: "Admin Account Login",
+          status: 'error',
+          message: `Admin account login failed: ${adminError.message}`
+        });
+      } else {
         addResult({
           name: "Admin Account Login",
           status: 'success',
-          message: "Existing admin account login successful"
-        });
-      } else {
-        // If login fails, try to create the account
-        const { data: newAdminData, error: adminSignUpError } = await signUp({
-          email: adminEmail,
-          password: testPassword,
-          name: "Test Admin"
-        });
-
-        if (adminSignUpError && !adminSignUpError.message.includes('already registered')) {
-          addResult({
-            name: "Admin Account Creation",
-            status: 'warning',
-            message: `Admin account creation issue: ${adminSignUpError.message}`
-          });
-        } else {
-          adminSuccess = true;
-          addResult({
-            name: "Admin Account",
-            status: 'success',
-            message: "Admin account ready (created or already exists)"
-          });
-        }
-      }
-
-      if (customerSuccess || adminSuccess) {
-        addResult({
-          name: "Test User Accounts",
-          status: 'success',
-          message: "Test accounts are functional"
-        });
-      } else {
-        addResult({
-          name: "Test User Accounts",
-          status: 'warning',
-          message: "Test accounts have some issues but may still be usable"
+          message: "Admin account login successful"
         });
       }
     } catch (error: any) {
@@ -292,7 +231,7 @@ const ComprehensiveFlowTester = () => {
     }
   };
 
-  // Test 7: Books Table Operations (Updated to handle RLS issues)
+  // Test 7: Books Table Operations
   const testBooksOperations = async () => {
     setCurrentTestStatus("Books Operations");
     try {
@@ -306,7 +245,7 @@ const ComprehensiveFlowTester = () => {
         message: `Successfully read ${books?.length || 0} books from database`
       });
 
-      // Test creating a book (as admin)
+      // Test creating a book (requires admin permissions)
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
         const { book, error: createError } = await createBook({
@@ -320,20 +259,11 @@ const ComprehensiveFlowTester = () => {
         }, session.session.user.id);
 
         if (createError) {
-          // If it's an RLS policy violation, treat as warning
-          if (createError.message.includes('row-level security policy')) {
-            addResult({
-              name: "Books Create Operation",
-              status: 'warning',
-              message: "Book creation blocked by RLS policy - this is expected without proper admin setup"
-            });
-          } else {
-            addResult({
-              name: "Books Create Operation",
-              status: 'warning',
-              message: `Book creation test: ${createError.message}`
-            });
-          }
+          addResult({
+            name: "Books Create Operation",
+            status: 'error',
+            message: `Book creation failed: ${createError.message}`
+          });
         } else {
           addResult({
             name: "Books Create Operation",
@@ -361,7 +291,7 @@ const ComprehensiveFlowTester = () => {
       if (!initialSession.session) {
         addResult({
           name: "Session Persistence",
-          status: 'warning',
+          status: 'error',
           message: "No active session to test persistence"
         });
         return;
@@ -441,7 +371,7 @@ const ComprehensiveFlowTester = () => {
       } else {
         addResult({
           name: "Error Handling",
-          status: 'warning',
+          status: 'error',
           message: "Expected error for invalid credentials but got success"
         });
       }
@@ -498,8 +428,6 @@ const ComprehensiveFlowTester = () => {
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'error':
         return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       default:
         return <Loader2 className="h-4 w-4 animate-spin" />;
     }
@@ -511,8 +439,6 @@ const ComprehensiveFlowTester = () => {
         return 'bg-green-100 text-green-800';
       case 'error':
         return 'bg-red-100 text-red-800';
-      case 'warning':
-        return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -520,7 +446,6 @@ const ComprehensiveFlowTester = () => {
 
   const successCount = testResults.filter(r => r.status === 'success').length;
   const errorCount = testResults.filter(r => r.status === 'error').length;
-  const warningCount = testResults.filter(r => r.status === 'warning').length;
 
   return (
     <div className="container mx-auto p-4 max-w-4xl">
@@ -544,7 +469,7 @@ const ComprehensiveFlowTester = () => {
             </Button>
 
             {testResults.length > 0 && (
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-2 gap-4 text-center">
                 <div className="bg-green-50 p-3 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">{successCount}</div>
                   <div className="text-sm text-green-700">Passed</div>
@@ -552,10 +477,6 @@ const ComprehensiveFlowTester = () => {
                 <div className="bg-red-50 p-3 rounded-lg">
                   <div className="text-2xl font-bold text-red-600">{errorCount}</div>
                   <div className="text-sm text-red-700">Failed</div>
-                </div>
-                <div className="bg-yellow-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-600">{warningCount}</div>
-                  <div className="text-sm text-yellow-700">Warnings</div>
                 </div>
               </div>
             )}
@@ -601,7 +522,7 @@ const ComprehensiveFlowTester = () => {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Test Information & Recommendations</CardTitle>
+          <CardTitle>Test Information</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -615,21 +536,8 @@ const ComprehensiveFlowTester = () => {
             <Alert className="mt-4">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Important Notes:</strong><br/>
-                • RLS Policy warnings are normal if Row Level Security is not properly configured<br/>
-                • Duplicate user errors indicate test accounts already exist (this is expected)<br/>
-                • Book creation failures may indicate missing admin permissions<br/>
-                • This test runs in your development environment and creates real data
-              </AlertDescription>
-            </Alert>
-
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>To fix RLS policy issues:</strong><br/>
-                1. Set up proper Row Level Security policies in Supabase<br/>
-                2. Configure user roles and permissions<br/>
-                3. Ensure authenticated users can create profiles and data
+                <strong>Note:</strong> This test creates real data in your development environment. 
+                Some tests may fail if proper permissions or test accounts are not set up.
               </AlertDescription>
             </Alert>
           </div>
