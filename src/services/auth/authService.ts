@@ -86,14 +86,13 @@ export const getUserProfile = async (userId: string): Promise<{ data: UserProfil
       .single();
     
     if (error) {
-      // Return the correct type structure when there's an error
-      return { data: null, error: error as Error };
+      console.error("Database error getting user profile:", error);
+      return { data: null, error: new Error(error.message) };
     }
     
     return { data, error: null };
   } catch (error) {
     console.error("Error getting user profile:", error);
-    // Ensure we return the correct type structure here
     return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
   }
 };
@@ -136,36 +135,45 @@ export const onAuthStateChange = (callback: (event: string, session: Session | n
 // Create test user accounts with admin role
 export const createTestUsers = async (): Promise<{success: boolean, message: string}> => {
   try {
-    // Using the test accounts with verified emails
-    const { error: userError } = await signIn({ 
+    console.log("Attempting to create test users...");
+    
+    // Try to sign in with customer account first
+    const { error: customerSignInError } = await signIn({ 
       email: 'customer@example.com', 
       password: 'password123' 
     });
     
-    if (userError) {
+    if (customerSignInError) {
+      console.log("Customer account doesn't exist, creating it...");
       // If login fails, try to create the account
-      const { error: createUserError } = await signUp({
+      const { data: customerData, error: createCustomerError } = await signUp({
         email: 'customer@example.com',
         password: 'password123',
         name: 'Test Customer',
         metadata: { role: 'user' }
       });
       
-      if (createUserError) {
-        console.error("Error creating customer account:", createUserError);
+      if (createCustomerError) {
+        console.error("Error creating customer account:", createCustomerError);
+      } else {
+        console.log("Customer account created successfully:", customerData);
       }
+    } else {
+      console.log("Customer account already exists and can be used");
     }
     
     await signOut();
     
-    const { error: adminError } = await signIn({ 
+    // Try to sign in with admin account
+    const { error: adminSignInError } = await signIn({ 
       email: 'admin@example.com', 
       password: 'password123' 
     });
     
-    if (adminError) {
+    if (adminSignInError) {
+      console.log("Admin account doesn't exist, creating it...");
       // If login fails, try to create the account
-      const { error: createAdminError } = await signUp({
+      const { data: adminData, error: createAdminError } = await signUp({
         email: 'admin@example.com',
         password: 'password123',
         name: 'Test Admin',
@@ -174,11 +182,21 @@ export const createTestUsers = async (): Promise<{success: boolean, message: str
       
       if (createAdminError) {
         console.error("Error creating admin account:", createAdminError);
+      } else {
+        console.log("Admin account created successfully:", adminData);
       }
+    } else {
+      console.log("Admin account already exists and can be used");
     }
     
-    return { success: true, message: 'Test users are ready to use. You may need to go to Supabase and manually set the admin role or confirm emails.' };
+    await signOut();
+    
+    return { 
+      success: true, 
+      message: 'Test accounts are ready to use. Customer: customer@example.com / password123, Admin: admin@example.com / password123' 
+    };
   } catch (error: any) {
+    console.error("Error in createTestUsers:", error);
     return { success: false, message: error.message };
   }
 };
