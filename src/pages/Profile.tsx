@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
 import { useToast } from "@/components/ui/use-toast";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { format } from "date-fns";
-import { signOut, getOrCreateUserProfile } from "@/services/auth/authService";
+import { signOut } from "@/services/auth/coreAuthService";
+import { getOrCreateUserProfile } from "@/services/auth/userProfileService";
 import { getUserPurchasedBooks } from "@/services/books/bookService";
 import { supabase } from "@/integrations/supabase/client";
 
