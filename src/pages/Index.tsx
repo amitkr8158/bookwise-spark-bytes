@@ -9,6 +9,9 @@ import {
   useFreeBooks 
 } from "@/services/bookService";
 
+// Import the test function to check Supabase connection
+import { testSupabaseConnection } from "@/utils/testSupabaseConnection";
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/sections/HeroSection";
@@ -26,21 +29,39 @@ const Index = () => {
   // Track page view
   usePageViewTracking('/', 'Home');
   
+  // Test Supabase connection on component mount
+  useEffect(() => {
+    console.log('🏠 Index page mounted, testing Supabase connection...');
+    testSupabaseConnection();
+  }, []);
+  
   // Fetch book data
   const { 
     books: trendingBooks, 
-    loading: loadingTrending 
+    loading: loadingTrending,
+    error: errorTrending 
   } = useTrendingBooks(language);
   
   const { 
     books: newReleases, 
-    loading: loadingNewReleases 
+    loading: loadingNewReleases,
+    error: errorNewReleases 
   } = useNewReleases(language);
   
   const { 
     books: freeBooks, 
-    loading: loadingFreeBooks 
+    loading: loadingFreeBooks,
+    error: errorFreeBooks 
   } = useFreeBooks(language);
+
+  // Log data for debugging
+  useEffect(() => {
+    console.log('📊 Data status:', {
+      trending: { books: trendingBooks.length, loading: loadingTrending, error: errorTrending },
+      newReleases: { books: newReleases.length, loading: loadingNewReleases, error: errorNewReleases },
+      freeBooks: { books: freeBooks.length, loading: loadingFreeBooks, error: errorFreeBooks }
+    });
+  }, [trendingBooks, newReleases, freeBooks, loadingTrending, loadingNewReleases, loadingFreeBooks]);
 
   // Ensure all books have valid cover images
   const ensureValidImages = (books: any[]) => {
@@ -73,6 +94,11 @@ const Index = () => {
                   ))}
                 </div>
               </div>
+            ) : errorTrending ? (
+              <div className="bg-red-50 p-4 rounded-md">
+                <h3 className="text-lg font-medium text-red-800 mb-2">Error loading trending books</h3>
+                <p className="text-red-600">{errorTrending}</p>
+              </div>
             ) : (
               <BookCarousel 
                 title={t('section.trending')} 
@@ -99,6 +125,11 @@ const Index = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            ) : errorNewReleases ? (
+              <div className="bg-red-50 p-4 rounded-md">
+                <h3 className="text-lg font-medium text-red-800 mb-2">Error loading new releases</h3>
+                <p className="text-red-600">{errorNewReleases}</p>
               </div>
             ) : (
               <BookCarousel 
@@ -127,6 +158,15 @@ const Index = () => {
                       <Skeleton className="h-3 w-2/3" />
                     </div>
                   ))}
+                </div>
+              ) : errorFreeBooks ? (
+                <div className="bg-red-50 p-4 rounded-md">
+                  <h3 className="text-lg font-medium text-red-800 mb-2">Error loading free books</h3>
+                  <p className="text-red-600">{errorFreeBooks}</p>
+                </div>
+              ) : freeBooks.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No free books available at the moment.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
