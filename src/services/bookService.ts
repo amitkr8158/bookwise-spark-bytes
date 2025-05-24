@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react';
 import { getBooks, getBookById } from '@/services/books/bookService';
 
+// Re-export the useBooks hook
+export { useBooks } from '@/hooks/useBooks';
+
 // Hook to fetch trending books
 export const useTrendingBooks = (language: string = 'en') => {
   const [books, setBooks] = useState<any[]>([]);
@@ -15,15 +18,15 @@ export const useTrendingBooks = (language: string = 'en') => {
         console.log('Fetching trending books...');
         
         // Get books from Supabase
-        const { books: fetchedBooks, error } = await getBooks({
+        const { books: fetchedBooks, error: fetchError } = await getBooks({
           language,
           limit: 8,
           sortBy: 'popular'
         });
 
-        if (error) {
-          console.error('Error fetching trending books:', error);
-          setError(error);
+        if (fetchError) {
+          console.error('Error fetching trending books:', fetchError);
+          setError(fetchError.message || 'Failed to fetch trending books');
         } else {
           console.log('Fetched trending books:', fetchedBooks);
           
@@ -37,7 +40,11 @@ export const useTrendingBooks = (language: string = 'en') => {
             isNew: false,
             category: book.category,
             rating: 4.5, // Default rating
-            readTime: book.read_time || 20
+            readTime: book.read_time || 20,
+            hasPdf: book.pdf_url ? true : false,
+            hasAudio: book.audio_url ? true : false,
+            hasVideo: book.video_url ? true : false,
+            isFree: book.is_free
           }));
 
           setBooks(transformedBooks);
@@ -69,15 +76,15 @@ export const useNewReleases = (language: string = 'en') => {
         console.log('Fetching new releases...');
         
         // Get books from Supabase
-        const { books: fetchedBooks, error } = await getBooks({
+        const { books: fetchedBooks, error: fetchError } = await getBooks({
           language,
           limit: 8,
           sortBy: 'newest'
         });
 
-        if (error) {
-          console.error('Error fetching new releases:', error);
-          setError(error);
+        if (fetchError) {
+          console.error('Error fetching new releases:', fetchError);
+          setError(fetchError.message || 'Failed to fetch new releases');
         } else {
           console.log('Fetched new releases:', fetchedBooks);
           
@@ -91,7 +98,11 @@ export const useNewReleases = (language: string = 'en') => {
             isNew: true,
             category: book.category,
             rating: 4.5, // Default rating
-            readTime: book.read_time || 20
+            readTime: book.read_time || 20,
+            hasPdf: book.pdf_url ? true : false,
+            hasAudio: book.audio_url ? true : false,
+            hasVideo: book.video_url ? true : false,
+            isFree: book.is_free
           }));
 
           setBooks(transformedBooks);
@@ -123,14 +134,14 @@ export const useFreeBooks = (language: string = 'en') => {
         console.log('Fetching free books...');
         
         // Get free books from Supabase
-        const { books: fetchedBooks, error } = await getBooks({
+        const { books: fetchedBooks, error: fetchError } = await getBooks({
           language,
           limit: 4
         });
 
-        if (error) {
-          console.error('Error fetching free books:', error);
-          setError(error);
+        if (fetchError) {
+          console.error('Error fetching free books:', fetchError);
+          setError(fetchError.message || 'Failed to fetch free books');
         } else {
           console.log('Fetched all books:', fetchedBooks);
           
@@ -146,7 +157,11 @@ export const useFreeBooks = (language: string = 'en') => {
               isNew: false,
               category: book.category,
               rating: 4.5, // Default rating
-              readTime: book.read_time || 20
+              readTime: book.read_time || 20,
+              hasPdf: book.pdf_url ? true : false,
+              hasAudio: book.audio_url ? true : false,
+              hasVideo: book.video_url ? true : false,
+              isFree: book.is_free
             }));
 
           console.log('Filtered free books:', freeBooks);
