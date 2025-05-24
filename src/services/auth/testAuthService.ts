@@ -9,12 +9,12 @@ import { supabase } from "@/integrations/supabase/client";
 export const testUsers = {
   customer: {
     email: 'customer@example.com',
-    password: 'password123',
+    password: 'TestPass123!',
     role: 'user'
   },
   admin: {
     email: 'admin@example.com',
-    password: 'password123',
+    password: 'TestPass123!',
     role: 'admin'
   }
 };
