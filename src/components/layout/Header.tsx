@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { supabase } from "@/integrations/supabase/client";
-import { getOrCreateUserProfile } from "@/services/auth/authService";
+import { getOrCreateUserProfile } from "@/services/auth/userProfileService";
 import HeaderLogo from "./HeaderLogo";
 import HeaderDesktopNav from "./HeaderDesktopNav";
 import HeaderDesktopActions from "./HeaderDesktopActions";

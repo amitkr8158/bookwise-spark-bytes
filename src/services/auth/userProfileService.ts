@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "./types";
-import { signOut } from "./coreAuthService";
 
 // Helper function to handle profile failures with logout
 const handleProfileFailure = async (error: any) => {
@@ -9,7 +8,7 @@ const handleProfileFailure = async (error: any) => {
   
   // Attempt to sign out to clean up the session
   try {
-    await signOut();
+    await supabase.auth.signOut();
   } catch (logoutError) {
     console.error("Error during cleanup logout:", logoutError);
   }
