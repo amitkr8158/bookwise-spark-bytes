@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +41,24 @@ const ComprehensiveFlowTester = () => {
 
   const setCurrentTestStatus = (testName: string) => {
     setCurrentTest(testName);
+  };
+
+  // Helper function to handle profile creation failures
+  const handleProfileFailure = async (error: any) => {
+    console.log("Profile creation failed, logging out and cleaning session:", error);
+    
+    // Attempt to sign out to clean up the session
+    try {
+      await signOut();
+    } catch (logoutError) {
+      console.error("Error during cleanup logout:", logoutError);
+    }
+    
+    return {
+      status: 'error' as const,
+      message: `Profile creation failed (RLS policy violation): ${error.message}. Session cleaned up.`,
+      details: error
+    };
   };
 
   // Test 1: Database Connection
@@ -118,7 +135,7 @@ const ComprehensiveFlowTester = () => {
     }
   };
 
-  // Test 4: Profile Creation
+  // Test 4: Profile Creation with failure handling
   const testProfileCreation = async (userId: string) => {
     setCurrentTestStatus("Profile Creation");
     try {
@@ -127,7 +144,18 @@ const ComprehensiveFlowTester = () => {
         email: testEmail
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle RLS policy violations specifically
+        if (error.message?.includes('row-level security policy')) {
+          const result = await handleProfileFailure(error);
+          addResult({
+            name: "Profile Creation",
+            ...result
+          });
+          return null;
+        }
+        throw error;
+      }
 
       addResult({
         name: "Profile Creation",
@@ -138,10 +166,10 @@ const ComprehensiveFlowTester = () => {
       
       return data;
     } catch (error: any) {
+      const result = await handleProfileFailure(error);
       addResult({
         name: "Profile Creation",
-        status: 'error',
-        message: `Profile creation failed: ${error.message}`
+        ...result
       });
       return null;
     }
@@ -396,8 +424,11 @@ const ComprehensiveFlowTester = () => {
       
       const user = await testUserRegistration();
       if (user) {
-        await testProfileCreation(user.id);
-        await testUserLogin();
+        const profile = await testProfileCreation(user.id);
+        // Only continue with login if profile creation succeeded
+        if (profile) {
+          await testUserLogin();
+        }
       }
       
       await testTestUserAccounts();
@@ -537,6 +568,7 @@ const ComprehensiveFlowTester = () => {
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
                 <strong>Note:</strong> This test creates real data in your development environment. 
+                Profile creation failures (RLS policy violations) will automatically trigger logout and session cleanup.
                 Some tests may fail if proper permissions or test accounts are not set up.
               </AlertDescription>
             </Alert>
