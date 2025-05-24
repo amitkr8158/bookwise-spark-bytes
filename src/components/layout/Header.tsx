@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { supabase } from "@/integrations/supabase/client";
-import { getUserProfile } from "@/services/auth/authService";
+import { getOrCreateUserProfile } from "@/services/auth/authService";
 import HeaderLogo from "./HeaderLogo";
 import HeaderDesktopNav from "./HeaderDesktopNav";
 import HeaderDesktopActions from "./HeaderDesktopActions";
@@ -15,20 +15,30 @@ const Header = () => {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  // Helper function to safely fetch user profile
-  const fetchUserProfile = (userId: string) => {
-    getUserProfile(userId).then(({ data }) => {
+  // Helper function to safely fetch or create user profile
+  const fetchOrCreateUserProfile = (userId: string, userMetadata?: any) => {
+    const userData = {
+      full_name: userMetadata?.full_name || userMetadata?.name || '',
+      email: userMetadata?.email || ''
+    };
+    
+    getOrCreateUserProfile(userId, userData).then(({ data, error }) => {
+      if (error) {
+        console.error("Error fetching/creating user profile:", error);
+        return;
+      }
+      
       if (data) {
         setUser({
           id: userId,
           name: data.full_name || '',
-          email: data.email || '',
+          email: userData.email || '',
           role: data.role || 'user',
           avatar: data.avatar_url || undefined,
         });
       }
     }).catch(err => {
-      console.error("Error fetching user profile:", err);
+      console.error("Error in fetchOrCreateUserProfile:", err);
     });
   };
 
@@ -41,7 +51,7 @@ const Header = () => {
       if (session?.user) {
         // Use setTimeout to avoid Supabase auth deadlock
         setTimeout(() => {
-          fetchUserProfile(session.user.id);
+          fetchOrCreateUserProfile(session.user.id, session.user.user_metadata);
         }, 0);
       }
     });
@@ -55,7 +65,7 @@ const Header = () => {
         if (session?.user) {
           // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(() => {
-            fetchUserProfile(session.user.id);
+            fetchOrCreateUserProfile(session.user.id, session.user.user_metadata);
           }, 0);
         } else {
           setUser(null);

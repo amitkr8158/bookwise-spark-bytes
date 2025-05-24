@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { usePageViewTracking } from "@/hooks/useAnalytics";
 import { useToast } from "@/components/ui/use-toast";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { format } from "date-fns";
-import { signOut, getUserProfile } from "@/services/auth/authService";
+import { signOut, getOrCreateUserProfile } from "@/services/auth/authService";
 import { getUserPurchasedBooks } from "@/services/books/bookService";
 
 import Header from "@/components/layout/Header";
@@ -50,30 +49,55 @@ const Profile = () => {
     }
   }, [isAuthenticated, navigate]);
   
-  // Fetch purchased books
+  // Ensure user profile exists and fetch purchased books
   useEffect(() => {
-    const fetchPurchasedItems = async () => {
-      if (!user?.id) return;
+    const initializeProfile = async () => {
+      if (!isAuthenticated) return;
+      
+      // Get current auth user
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
       
       try {
-        const { purchases, error } = await getUserPurchasedBooks(user.id);
+        // Ensure profile exists
+        const { data: profile, error: profileError } = await getOrCreateUserProfile(
+          authUser.id, 
+          {
+            full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
+            email: authUser.email || ''
+          }
+        );
         
-        if (error) {
-          throw error;
+        if (profileError) {
+          console.error("Error ensuring profile exists:", profileError);
+        } else if (profile && !user) {
+          // Update global user state if not already set
+          setUser({
+            id: authUser.id,
+            name: profile.full_name || '',
+            email: authUser.email || '',
+            role: profile.role || 'user',
+            avatar: profile.avatar_url || undefined,
+          });
         }
         
-        if (purchases) {
+        // Fetch purchased books
+        const { purchases, error: booksError } = await getUserPurchasedBooks(authUser.id);
+        
+        if (booksError) {
+          console.error("Error fetching purchased items:", booksError);
+        } else if (purchases) {
           setPurchasedBooks(purchases);
         }
       } catch (error) {
-        console.error("Error fetching purchased items:", error);
+        console.error("Error in profile initialization:", error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchPurchasedItems();
-  }, [user]);
+    initializeProfile();
+  }, [isAuthenticated, user, setUser]);
   
   // Handle user logout
   const handleLogout = async () => {
