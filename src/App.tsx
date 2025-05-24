@@ -25,6 +25,7 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import SupabaseIntegrationTester from "./components/testing/SupabaseIntegrationTester";
+import ComprehensiveFlowTester from "./components/testing/ComprehensiveFlowTester";
 
 // Import SalesNotification component and services
 import SalesNotification from "@/components/notifications/SalesNotification";
@@ -62,6 +63,7 @@ const AppContent = () => {
             <Route path="/profile" element={<Profile />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/test" element={<SupabaseIntegrationTester />} />
+            <Route path="/test-flows" element={<ComprehensiveFlowTester />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
