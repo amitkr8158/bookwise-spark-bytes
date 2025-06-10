@@ -1,6 +1,4 @@
 
-import { User } from "@/contexts/GlobalContext";
-
 // Test account credentials
 export const testAccounts = {
   user: {
