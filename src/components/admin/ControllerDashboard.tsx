@@ -5,35 +5,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Eye, Users, BookOpen, MessageSquare } from "lucide-react";
 import ReviewManager from "@/components/admin/ReviewManager";
+import { mockBookReviews, mockProfiles } from "@/data/mockData";
+import { Review } from "@/components/reviews/ReviewCard";
 
 const ControllerDashboard: React.FC = () => {
-  // Mock data for now - we'll integrate with actual services once the database relationships are fixed
-  const mockReviews = [
-    {
-      id: "1",
-      userId: "user1",
-      bookId: "book1",
-      userName: "John Doe",
-      userAvatar: undefined,
-      rating: 5,
-      content: "Great book, highly recommend!",
-      createdAt: new Date(),
-      isVisible: true,
-      isTopReview: false
-    },
-    {
-      id: "2", 
-      userId: "user2",
-      bookId: "book2",
-      userName: "Jane Smith",
-      userAvatar: undefined,
-      rating: 4,
-      content: "Very insightful and well written.",
-      createdAt: new Date(),
-      isVisible: false,
-      isTopReview: false
-    }
-  ];
+  // Convert mock data to the format expected by ReviewManager
+  const reviews: Review[] = mockBookReviews.map(review => {
+    const userProfile = mockProfiles.find(p => p.id === review.user_id);
+    return {
+      id: review.id,
+      userId: review.user_id,
+      bookId: review.book_id,
+      userName: userProfile?.full_name || 'Anonymous User',
+      userAvatar: userProfile?.avatar_url,
+      rating: review.rating,
+      content: review.review_text || '',
+      createdAt: review.created_at,
+      isVisible: review.is_visible || false,
+      isTopReview: review.is_top_review || false
+    };
+  });
 
   const handleToggleVisibility = (reviewId: string) => {
     console.log("Toggle visibility for review:", reviewId);
@@ -48,25 +39,25 @@ const ControllerDashboard: React.FC = () => {
   const stats = [
     {
       title: "Total Reviews",
-      value: mockReviews.length.toString(),
+      value: reviews.length.toString(),
       description: "All user reviews",
       icon: MessageSquare,
     },
     {
       title: "Visible Reviews",
-      value: mockReviews.filter(r => r.isVisible).length.toString(),
+      value: reviews.filter(r => r.isVisible).length.toString(),
       description: "Currently visible to users",
       icon: Eye,
     },
     {
       title: "Top Reviews",
-      value: mockReviews.filter(r => r.isTopReview).length.toString(),
+      value: reviews.filter(r => r.isTopReview).length.toString(),
       description: "Featured reviews",
       icon: BookOpen,
     },
     {
       title: "Pending Moderation",
-      value: mockReviews.filter(r => !r.isVisible).length.toString(),
+      value: reviews.filter(r => !r.isVisible).length.toString(),
       description: "Reviews awaiting approval",
       icon: Users,
     },
@@ -105,7 +96,7 @@ const ControllerDashboard: React.FC = () => {
         
         <TabsContent value="reviews" className="space-y-4">
           <ReviewManager 
-            reviews={mockReviews} 
+            reviews={reviews} 
             onToggleVisibility={handleToggleVisibility}
             onToggleTopReview={handleToggleTopReview}
           />
