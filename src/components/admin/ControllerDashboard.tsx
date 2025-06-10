@@ -5,48 +5,68 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Eye, Users, BookOpen, MessageSquare } from "lucide-react";
 import ReviewManager from "@/components/admin/ReviewManager";
-import { useReviews } from "@/services/configService";
-import { Review } from "@/components/reviews/ReviewCard";
 
 const ControllerDashboard: React.FC = () => {
-  const { reviews: serviceReviews, toggleReviewVisibility, toggleTopReview } = useReviews();
+  // Mock data for now - we'll integrate with actual services once the database relationships are fixed
+  const mockReviews = [
+    {
+      id: "1",
+      userId: "user1",
+      bookId: "book1",
+      userName: "John Doe",
+      userAvatar: undefined,
+      rating: 5,
+      content: "Great book, highly recommend!",
+      createdAt: new Date(),
+      isVisible: true,
+      isTopReview: false
+    },
+    {
+      id: "2", 
+      userId: "user2",
+      bookId: "book2",
+      userName: "Jane Smith",
+      userAvatar: undefined,
+      rating: 4,
+      content: "Very insightful and well written.",
+      createdAt: new Date(),
+      isVisible: false,
+      isTopReview: false
+    }
+  ];
 
-  // Convert service reviews to the format expected by ReviewManager
-  const reviews: Review[] = serviceReviews.map(review => ({
-    id: review.id,
-    userId: review.user_id,
-    bookId: review.book_id,
-    userName: review.user_name || 'Anonymous',
-    userAvatar: undefined,
-    rating: review.rating,
-    content: review.review_text || '',
-    createdAt: new Date(review.created_at),
-    isVisible: review.is_visible || false,
-    isTopReview: review.is_top_review || false
-  }));
+  const handleToggleVisibility = (reviewId: string) => {
+    console.log("Toggle visibility for review:", reviewId);
+    // TODO: Implement actual visibility toggle
+  };
+
+  const handleToggleTopReview = (reviewId: string) => {
+    console.log("Toggle top review for:", reviewId);
+    // TODO: Implement actual top review toggle
+  };
 
   const stats = [
     {
       title: "Total Reviews",
-      value: reviews.length.toString(),
+      value: mockReviews.length.toString(),
       description: "All user reviews",
       icon: MessageSquare,
     },
     {
       title: "Visible Reviews",
-      value: reviews.filter(r => r.isVisible).length.toString(),
+      value: mockReviews.filter(r => r.isVisible).length.toString(),
       description: "Currently visible to users",
       icon: Eye,
     },
     {
       title: "Top Reviews",
-      value: reviews.filter(r => r.isTopReview).length.toString(),
+      value: mockReviews.filter(r => r.isTopReview).length.toString(),
       description: "Featured reviews",
       icon: BookOpen,
     },
     {
       title: "Pending Moderation",
-      value: reviews.filter(r => !r.isVisible).length.toString(),
+      value: mockReviews.filter(r => !r.isVisible).length.toString(),
       description: "Reviews awaiting approval",
       icon: Users,
     },
@@ -85,9 +105,9 @@ const ControllerDashboard: React.FC = () => {
         
         <TabsContent value="reviews" className="space-y-4">
           <ReviewManager 
-            reviews={reviews} 
-            onToggleVisibility={toggleReviewVisibility}
-            onToggleTopReview={toggleTopReview}
+            reviews={mockReviews} 
+            onToggleVisibility={handleToggleVisibility}
+            onToggleTopReview={handleToggleTopReview}
           />
         </TabsContent>
       </Tabs>

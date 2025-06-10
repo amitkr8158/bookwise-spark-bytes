@@ -93,8 +93,6 @@ const AdminLogin = () => {
         
         // Check if user has admin or controller role
         if (!profileData || !['admin', 'controller'].includes(profileData.role || 'user')) {
-          // Sign out the user since they don't have the right permissions
-          await signIn({ email: '', password: '' }); // This will effectively sign them out
           throw new Error("Access denied. Admin or Controller privileges required.");
         }
         
