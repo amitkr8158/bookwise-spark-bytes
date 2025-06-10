@@ -9,6 +9,7 @@ import { GlobalProvider } from "@/contexts/GlobalContext";
 import Index from "./pages/Index";
 import Library from "./pages/Library";
 import Login from "./pages/Login";
+import AdminLogin from "./pages/AdminLogin";
 import Signup from "./pages/Signup";
 import Browse from "./pages/Browse";
 import Categories from "./pages/Categories";
@@ -48,6 +49,7 @@ const AppContent = () => {
             <Route path="/" element={<Index />} />
             <Route path="/library" element={<Library />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/browse" element={<Browse />} />
             <Route path="/categories" element={<Categories />} />

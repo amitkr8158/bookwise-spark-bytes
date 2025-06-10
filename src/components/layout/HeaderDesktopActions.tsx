@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { Button } from "@/components/ui/button";
-import { Search, Moon, Sun, Globe, ShoppingCart } from "lucide-react";
+import { Search, Moon, Sun, Globe, ShoppingCart, Settings } from "lucide-react";
 import UserDropdownMenu from "./UserDropdownMenu";
 
 const HeaderDesktopActions = () => {
@@ -23,6 +23,10 @@ const HeaderDesktopActions = () => {
 
   const handleSignupClick = () => {
     navigate('/signup');
+  };
+
+  const handleAdminClick = () => {
+    navigate('/admin-login');
   };
 
   return (
@@ -71,6 +75,11 @@ const HeaderDesktopActions = () => {
       <Link to="/cart" className="p-2 rounded-full hover:bg-muted transition-colors">
         <ShoppingCart className="h-5 w-5" />
       </Link>
+
+      {/* Admin/Controller Login */}
+      <button onClick={handleAdminClick} className="p-2 rounded-full hover:bg-muted transition-colors" title="Admin/Controller Login">
+        <Settings className="h-5 w-5" />
+      </button>
 
       {/* Auth */}
       {isAuthenticated && user ? (

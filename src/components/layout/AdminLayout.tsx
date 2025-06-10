@@ -16,7 +16,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { toast } = useToast();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Check if user is admin
+  // Check if user is admin or controller
   useEffect(() => {
     const checkAuth = () => {
       // First check if authenticated
@@ -26,11 +26,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           description: "Please log in to access this page",
           variant: "destructive",
         });
-        navigate('/login');
+        navigate('/admin-login');
         return;
       }
       
-      // Then check if admin - with a small delay to ensure user data is loaded
+      // Then check if admin or controller - with a small delay to ensure user data is loaded
       setTimeout(() => {
         if (!user) {
           // Still loading user data, wait a bit more
@@ -39,10 +39,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         
         setIsCheckingAuth(false);
         
-        if (user.role !== 'admin') {
+        if (!['admin', 'controller'].includes(user.role || '')) {
           toast({
             title: "Access Denied",
-            description: "You must be an admin to access this page",
+            description: "You must be an admin or controller to access this page",
             variant: "destructive",
           });
           navigate('/');
@@ -66,8 +66,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     );
   }
 
-  // If not authenticated or not admin, don't render children
-  if (!isAuthenticated || (user && user.role !== 'admin')) {
+  // If not authenticated or not admin/controller, don't render children
+  if (!isAuthenticated || (user && !['admin', 'controller'].includes(user.role || ''))) {
     return null;
   }
 
